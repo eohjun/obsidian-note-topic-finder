@@ -155,26 +155,56 @@
 }
 
 /* Analyze Modal */
-.ai-pkm-analyze-modal {
-  width: 600px;
+.modal.mod-ai-pkm-analyze {
+  width: 700px;
   max-width: 90vw;
 }
 
-.ai-pkm-analyze-modal .input-container {
+.modal.mod-ai-pkm-analyze .modal-content {
+  padding: 20px;
+}
+
+.modal.mod-ai-pkm-analyze .setting-item {
+  border: none;
+  padding: 12px 0;
+}
+
+.modal.mod-ai-pkm-analyze .setting-item-info {
+  flex: 0 0 180px;
+}
+
+.modal.mod-ai-pkm-analyze .setting-item-control {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.modal.mod-ai-pkm-analyze .setting-item-control select,
+.modal.mod-ai-pkm-analyze .setting-item-control .dropdown {
+  min-width: 200px;
+}
+
+.modal.mod-ai-pkm-analyze .input-container {
   margin: 15px 0;
 }
 
-.ai-pkm-analyze-modal textarea {
+.modal.mod-ai-pkm-analyze .input-container .setting-item-control {
+  display: block;
+  width: 100%;
+}
+
+.modal.mod-ai-pkm-analyze textarea {
   width: 100%;
   min-height: 200px;
   resize: vertical;
 }
 
-.ai-pkm-analyze-modal .button-container {
+.modal.mod-ai-pkm-analyze .button-container {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--background-modifier-border);
 }
 
 /* Settings */
