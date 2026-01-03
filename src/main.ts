@@ -16,7 +16,7 @@ import {
   resetEventEmitter,
   JobQueue,
   AnalyzeContentUseCase,
-  GeneratePermanentNoteUseCase,
+  SuggestNoteTopicsUseCase,
 } from './core/application';
 import type { AnalysisResult } from './core/domain/entities/analysis-result';
 import { createLLMProvider, createAllProviders } from './core/adapters';
@@ -140,15 +140,15 @@ export default class AIPKMCompanionPlugin extends Plugin {
       callback: () => this.activateView(),
     });
 
-    // Generate permanent note from last analysis
+    // Suggest permanent note topics from last analysis
     this.addCommand({
-      id: 'generate-permanent-note',
-      name: 'Generate permanent note from analysis',
+      id: 'suggest-note-topics',
+      name: 'Suggest permanent note topics from analysis',
       callback: () => {
         if (this.analysisView) {
           const currentResult = (this.analysisView as AnalysisView & { currentResult: AnalysisResult | null }).currentResult;
           if (currentResult) {
-            this.generatePermanentNote(currentResult);
+            this.suggestNoteTopics(currentResult);
           } else {
             new Notice('No analysis result available. Run analysis first.');
           }
@@ -300,39 +300,40 @@ export default class AIPKMCompanionPlugin extends Plugin {
     return llmProvider.testApiKey(apiKey);
   }
 
-  public async generatePermanentNote(analysisResult: AnalysisResult): Promise<void> {
-    // Show generating state
+  public async suggestNoteTopics(analysisResult: AnalysisResult): Promise<void> {
+    // Show suggesting state
     if (this.analysisView) {
-      this.analysisView.setGeneratingNote(true);
+      this.analysisView.setSuggestingTopics(true);
     }
 
-    // Allow DOM to render before starting generation
+    // Allow DOM to render before starting
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
-      const useCase = new GeneratePermanentNoteUseCase(this.aiService, this.costTracker);
+      const useCase = new SuggestNoteTopicsUseCase(this.aiService, this.costTracker);
       const response = await useCase.execute({
         analysisResult,
         language: this.settings.ai.defaultLanguage,
+        count: 4,
       });
 
-      if (response.success && response.note && response.markdown) {
+      if (response.success && response.topics) {
         if (this.analysisView) {
-          this.analysisView.showPermanentNote(response.note, response.markdown);
+          this.analysisView.showTopicSuggestions(response.topics);
         }
-        new Notice('Permanent note generated');
+        new Notice(`Found ${response.topics.length} note topics`);
       } else {
         if (this.analysisView) {
-          this.analysisView.showError(response.error || 'Failed to generate permanent note');
+          this.analysisView.showError(response.error || 'Failed to suggest topics');
         }
-        new Notice(`Generation failed: ${response.error}`);
+        new Notice(`Suggestion failed: ${response.error}`);
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       if (this.analysisView) {
         this.analysisView.showError(errorMsg);
       }
-      new Notice(`Generation error: ${errorMsg}`);
+      new Notice(`Suggestion error: ${errorMsg}`);
     }
   }
 

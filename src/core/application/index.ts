@@ -26,11 +26,11 @@ export type {
 } from './services';
 
 // Use Cases
-export { AnalyzeContentUseCase, GeneratePermanentNoteUseCase } from './use-cases';
+export { AnalyzeContentUseCase, SuggestNoteTopicsUseCase } from './use-cases';
 export type {
   AnalyzeContentRequest,
   AnalyzeContentResponse,
-  GeneratePermanentNoteRequest,
-  GeneratePermanentNoteResponse,
-  PermanentNoteContent,
+  SuggestNoteTopicsRequest,
+  SuggestNoteTopicsResponse,
+  NoteTopic,
 } from './use-cases';

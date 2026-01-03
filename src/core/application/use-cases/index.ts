@@ -8,9 +8,9 @@ export type {
   AnalyzeContentResponse,
 } from './analyze-content';
 
-export { GeneratePermanentNoteUseCase } from './generate-permanent-note';
+export { SuggestNoteTopicsUseCase } from './suggest-note-topics';
 export type {
-  GeneratePermanentNoteRequest,
-  GeneratePermanentNoteResponse,
-  PermanentNoteContent,
-} from './generate-permanent-note';
+  SuggestNoteTopicsRequest,
+  SuggestNoteTopicsResponse,
+  NoteTopic,
+} from './suggest-note-topics';
