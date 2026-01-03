@@ -36,18 +36,6 @@
   margin: 5px 0;
 }
 
-/* Loading Overlay - covers entire content area */
-.note-topic-finder-view .progress-overlay {
-  position: absolute;
-  top: 50px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  min-height: 400px;
-  background: var(--background-primary);
-  z-index: 10;
-}
-
 /* Loading State */
 .note-topic-finder-view .loading-container {
   display: flex;

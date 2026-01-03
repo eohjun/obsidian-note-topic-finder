@@ -123,12 +123,17 @@ export class AnalysisView extends ItemView {
     // Remove existing overlay if any
     this.hideLoadingOverlay();
 
-    // Create overlay element
-    this.loadingOverlayEl = container.createDiv({ cls: 'progress-overlay' });
+    // Hide all existing content except header
+    Array.from(container.children).forEach(child => {
+      if (child instanceof HTMLElement && !child.hasClass('view-header')) {
+        child.style.display = 'none';
+      }
+    });
 
-    const loadingContainer = this.loadingOverlayEl.createDiv({ cls: 'loading-container' });
-    loadingContainer.createDiv({ cls: 'loading-spinner' });
-    this.loadingTextEl = loadingContainer.createEl('p', { cls: 'loading-text', text: message });
+    // Create loading element (not overlay, just regular content)
+    this.loadingOverlayEl = container.createDiv({ cls: 'loading-container' });
+    this.loadingOverlayEl.createDiv({ cls: 'loading-spinner' });
+    this.loadingTextEl = this.loadingOverlayEl.createEl('p', { cls: 'loading-text', text: message });
   }
 
   /**
