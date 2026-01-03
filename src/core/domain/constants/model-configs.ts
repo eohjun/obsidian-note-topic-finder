@@ -98,18 +98,6 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 
   // OpenAI Models
-  'gpt-5.2-pro': {
-    id: 'gpt-5.2-pro',
-    displayName: 'GPT-5.2 Pro',
-    provider: 'openai',
-    tier: 'premium',
-    inputCostPer1M: 5.0,
-    outputCostPer1M: 30.0,
-    maxInputTokens: 256000,
-    maxOutputTokens: 32768,
-    supportsVision: true,
-    supportsStreaming: true,
-  },
   'gpt-5.2': {
     id: 'gpt-5.2',
     displayName: 'GPT-5.2',
@@ -136,28 +124,28 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 
   // Grok Models
-  'grok-3': {
-    id: 'grok-3',
-    displayName: 'Grok 3',
+  'grok-4.1-fast': {
+    id: 'grok-4-1-fast',
+    displayName: 'Grok 4.1 Fast',
     provider: 'grok',
     tier: 'standard',
     inputCostPer1M: 3.0,
     outputCostPer1M: 15.0,
-    maxInputTokens: 131072,
+    maxInputTokens: 2000000,
     maxOutputTokens: 16384,
     supportsVision: true,
     supportsStreaming: true,
   },
-  'grok-3-mini': {
-    id: 'grok-3-mini',
-    displayName: 'Grok 3 Mini',
+  'grok-4.1-fast-non-reasoning': {
+    id: 'grok-4-1-fast-non-reasoning',
+    displayName: 'Grok 4.1 Fast (Non-Reasoning)',
     provider: 'grok',
     tier: 'economy',
-    inputCostPer1M: 0.3,
-    outputCostPer1M: 0.5,
-    maxInputTokens: 131072,
-    maxOutputTokens: 8192,
-    supportsVision: false,
+    inputCostPer1M: 0.6,
+    outputCostPer1M: 4.0,
+    maxInputTokens: 2000000,
+    maxOutputTokens: 16384,
+    supportsVision: true,
     supportsStreaming: true,
   },
 };
@@ -194,7 +182,7 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     name: 'xAI Grok',
     displayName: 'Grok',
     endpoint: 'https://api.x.ai/v1',
-    defaultModel: 'grok-3',
+    defaultModel: 'grok-4-1-fast',
   },
 };
 
@@ -206,13 +194,13 @@ export const FEATURE_DEFAULT_MODELS: Record<FeatureType, Record<AIProviderType, 
     claude: 'claude-3-5-haiku-20241022',
     gemini: 'gemini-2.0-flash',
     openai: 'gpt-4o-mini',
-    grok: 'grok-3-mini',
+    grok: 'grok-4-1-fast-non-reasoning',
   },
   'permanent-note': {
     claude: 'claude-sonnet-4-5-20250929',
     gemini: 'gemini-3-flash-preview',
     openai: 'gpt-5.2',
-    grok: 'grok-3',
+    grok: 'grok-4-1-fast',
   },
 };
 

@@ -6,6 +6,7 @@ export { BaseProvider } from './base-provider';
 export { ClaudeProvider } from './claude-provider';
 export { OpenAIProvider } from './openai-provider';
 export { GeminiProvider } from './gemini-provider';
+export { GrokProvider } from './grok-provider';
 
 // Re-export types from domain layer
 export type {
@@ -20,6 +21,7 @@ import type { AIProviderType, ILLMProvider } from '../../domain/interfaces/llm-p
 import { ClaudeProvider } from './claude-provider';
 import { OpenAIProvider } from './openai-provider';
 import { GeminiProvider } from './gemini-provider';
+import { GrokProvider } from './grok-provider';
 
 /**
  * Create LLM provider instance by type
@@ -32,6 +34,8 @@ export function createLLMProvider(type: AIProviderType): ILLMProvider {
       return new OpenAIProvider();
     case 'gemini':
       return new GeminiProvider();
+    case 'grok':
+      return new GrokProvider();
     default:
       throw new Error(`Unknown provider type: ${type}`);
   }
@@ -45,5 +49,6 @@ export function createAllProviders(): Map<AIProviderType, ILLMProvider> {
   providers.set('claude', new ClaudeProvider());
   providers.set('openai', new OpenAIProvider());
   providers.set('gemini', new GeminiProvider());
+  providers.set('grok', new GrokProvider());
   return providers;
 }
