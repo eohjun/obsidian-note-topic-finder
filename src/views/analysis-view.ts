@@ -18,9 +18,9 @@ export class AnalysisView extends ItemView {
   private suggestedTopics: NoteTopic[] | null = null;
   private isSuggestingTopics: boolean = false;
 
-  // Progress overlay elements (direct DOM references)
-  private progressOverlayEl: HTMLElement | null = null;
-  private progressTextEl: HTMLElement | null = null;
+  // Loading overlay elements (direct DOM references)
+  private loadingOverlayEl: HTMLElement | null = null;
+  private loadingTextEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: NoteTopicFinderPlugin) {
     super(leaf);
@@ -48,7 +48,7 @@ export class AnalysisView extends ItemView {
   }
 
   public showResult(result: AnalysisResult): void {
-    this.hideProgressOverlay();
+    this.hideLoadingOverlay();
     this.currentResult = result;
     this.currentJob = null;
     this.suggestedTopics = null;
@@ -57,7 +57,7 @@ export class AnalysisView extends ItemView {
   }
 
   public showTopicSuggestions(topics: NoteTopic[]): void {
-    this.hideProgressOverlay();
+    this.hideLoadingOverlay();
     this.suggestedTopics = topics;
     this.isSuggestingTopics = false;
     this.render();
@@ -66,25 +66,35 @@ export class AnalysisView extends ItemView {
   public setSuggestingTopics(suggesting: boolean): void {
     this.isSuggestingTopics = suggesting;
     if (suggesting) {
-      this.showProgressOverlay('Finding Note Topics...', 'Analyzing content for permanent note candidates...');
+      this.showLoadingOverlay('Finding note topics...');
     } else {
-      this.hideProgressOverlay();
+      this.hideLoadingOverlay();
     }
   }
 
   public showProgress(job: Job): void {
     this.currentJob = job;
-    this.showProgressOverlay('Analyzing...', 'Processing content with AI...');
+    // Determine message based on source type
+    const data = job.data as { sourceType?: string; sourceUrl?: string; sourcePath?: string };
+    let message = 'Analyzing content...';
+    if (data.sourceType === 'url') {
+      message = 'Analyzing URL...';
+    } else if (data.sourceType === 'note') {
+      message = 'Analyzing note...';
+    } else if (data.sourceType === 'text') {
+      message = 'Analyzing text...';
+    }
+    this.showLoadingOverlay(message);
   }
 
   public updateProgress(progress: number, message?: string): void {
-    if (this.progressTextEl && message) {
-      this.progressTextEl.textContent = message;
+    if (this.loadingTextEl && message) {
+      this.loadingTextEl.textContent = message;
     }
   }
 
   public showError(error: string): void {
-    this.hideProgressOverlay();
+    this.hideLoadingOverlay();
     this.currentJob = null;
     this.currentResult = null;
 
@@ -105,35 +115,30 @@ export class AnalysisView extends ItemView {
   }
 
   /**
-   * Show progress overlay without re-rendering entire view
-   * This is the key technique from obsidian-embedder
+   * Show loading overlay with spinner and text message
    */
-  private showProgressOverlay(title: string, message: string): void {
+  private showLoadingOverlay(message: string): void {
     const container = this.containerEl.children[1] as HTMLElement;
 
     // Remove existing overlay if any
-    this.hideProgressOverlay();
+    this.hideLoadingOverlay();
 
     // Create overlay element
-    this.progressOverlayEl = container.createDiv({ cls: 'progress-overlay' });
+    this.loadingOverlayEl = container.createDiv({ cls: 'progress-overlay' });
 
-    const progressContainer = this.progressOverlayEl.createDiv({ cls: 'progress-container' });
-    progressContainer.createEl('h5', { text: title });
-
-    const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
-    progressBar.createDiv({ cls: 'progress-fill indeterminate' });
-
-    this.progressTextEl = progressContainer.createEl('p', { cls: 'progress-text', text: message });
+    const loadingContainer = this.loadingOverlayEl.createDiv({ cls: 'loading-container' });
+    loadingContainer.createDiv({ cls: 'loading-spinner' });
+    this.loadingTextEl = loadingContainer.createEl('p', { cls: 'loading-text', text: message });
   }
 
   /**
-   * Hide progress overlay
+   * Hide loading overlay
    */
-  private hideProgressOverlay(): void {
-    if (this.progressOverlayEl) {
-      this.progressOverlayEl.remove();
-      this.progressOverlayEl = null;
-      this.progressTextEl = null;
+  private hideLoadingOverlay(): void {
+    if (this.loadingOverlayEl) {
+      this.loadingOverlayEl.remove();
+      this.loadingOverlayEl = null;
+      this.loadingTextEl = null;
     }
   }
 

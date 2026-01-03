@@ -47,52 +47,34 @@
   padding: 40px 20px;
 }
 
-/* Progress */
-.note-topic-finder-view .progress-container {
-  padding: 20px;
-  text-align: center;
-  width: 100%;
+/* Loading State */
+.note-topic-finder-view .loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 30px 20px;
 }
 
-.note-topic-finder-view .progress-bar {
-  height: 6px;
-  background: var(--background-modifier-border);
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 15px 0;
+.note-topic-finder-view .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.note-topic-finder-view .progress-fill {
-  height: 100%;
-  background: var(--interactive-accent);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.note-topic-finder-view .progress-fill.indeterminate {
-  width: 100% !important;
-  background: linear-gradient(
-    90deg,
-    var(--background-modifier-border) 0%,
-    var(--interactive-accent) 50%,
-    var(--background-modifier-border) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-.note-topic-finder-view .progress-text {
+.note-topic-finder-view .loading-text {
   color: var(--text-muted);
-  font-size: 0.9em;
+  font-size: 0.95em;
+  text-align: center;
 }
 
 /* Result Container */
