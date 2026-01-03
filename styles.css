@@ -70,16 +70,23 @@
 }
 
 .note-topic-finder-view .progress-fill.indeterminate {
-  width: 30% !important;
-  animation: progress-indeterminate 1.5s ease-in-out infinite;
+  width: 100% !important;
+  background: linear-gradient(
+    90deg,
+    var(--background-modifier-border) 0%,
+    var(--interactive-accent) 50%,
+    var(--background-modifier-border) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
-@keyframes progress-indeterminate {
+@keyframes shimmer {
   0% {
-    transform: translateX(-100%);
+    background-position: 200% 0;
   }
   100% {
-    transform: translateX(400%);
+    background-position: -200% 0;
   }
 }
 
