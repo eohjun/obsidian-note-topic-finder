@@ -21,8 +21,9 @@ import { createLLMProvider, createAllProviders } from './core/adapters';
 import { SettingsTab, AnalyzeModal, AnalysisView, ANALYSIS_VIEW_TYPE } from './views';
 import type { AnalyzeModalResult } from './views';
 
-interface PluginSettings {
+export interface PluginSettings {
   ai: AISettings;
+  outputFolder: string;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -38,6 +39,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
     defaultLanguage: 'auto',
     budgetLimit: undefined,
   },
+  outputFolder: '',
 };
 
 export default class AIPKMCompanionPlugin extends Plugin {

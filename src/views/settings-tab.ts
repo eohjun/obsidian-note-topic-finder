@@ -193,5 +193,19 @@ export class SettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    new Setting(containerEl)
+      .setName('Output Folder')
+      .setDesc('Folder path for saved notes (leave empty for vault root)')
+      .addText((text) => {
+        text
+          .setPlaceholder('e.g., Notes/Analysis')
+          .setValue(this.plugin.settings.outputFolder || '')
+          .onChange(async (value) => {
+            this.plugin.settings.outputFolder = value.trim();
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.style.width = '300px';
+      });
   }
 }

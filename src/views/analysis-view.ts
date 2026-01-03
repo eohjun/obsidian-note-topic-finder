@@ -183,11 +183,29 @@ export class AnalysisView extends ItemView {
 
   private async saveAsNote(result: AnalysisResult): Promise<void> {
     const markdown = result.toMarkdown();
-    const timestamp = new Date().toISOString().split('T')[0];
-    const fileName = `Analysis - ${timestamp}.md`;
+
+    // Sanitize title for file name
+    const sanitizedTitle = result.suggestedTitle
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 100);
+    const fileName = `${sanitizedTitle}.md`;
+
+    // Determine output folder
+    const outputFolder = this.plugin.settings.outputFolder?.trim();
+    const filePath = outputFolder ? `${outputFolder}/${fileName}` : fileName;
 
     try {
-      const file = await this.app.vault.create(fileName, markdown);
+      // Create output folder if it doesn't exist
+      if (outputFolder) {
+        const folderExists = this.app.vault.getAbstractFileByPath(outputFolder);
+        if (!folderExists) {
+          await this.app.vault.createFolder(outputFolder);
+        }
+      }
+
+      const file = await this.app.vault.create(filePath, markdown);
       new Notice(`Note created: ${file.path}`);
       await this.app.workspace.openLinkText(file.path, '');
     } catch (error) {

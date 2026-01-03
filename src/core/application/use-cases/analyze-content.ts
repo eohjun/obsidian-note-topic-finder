@@ -26,6 +26,7 @@ export interface AnalyzeContentResponse {
 }
 
 interface LLMAnalysisOutput {
+  suggestedTitle: string;
   summary: string;
   keyInsights: string[];
   suggestedTags: string[];
@@ -99,6 +100,7 @@ export class AnalyzeContentUseCase {
         sourceType,
         sourceContent: content.slice(0, 1000), // Store first 1000 chars
         sourceUrl,
+        suggestedTitle: parsed.suggestedTitle,
         summary: parsed.summary,
         keyInsights: parsed.keyInsights,
         suggestedTags: parsed.suggestedTags,
@@ -138,6 +140,7 @@ ${detailInstruction}
 
 You MUST respond in the following JSON format only, with no additional text:
 {
+  "suggestedTitle": "A concise, descriptive title for the note",
   "summary": "A clear, concise summary of the main points",
   "keyInsights": ["insight 1", "insight 2", "insight 3"],
   "suggestedTags": ["tag1", "tag2", "tag3"],
@@ -145,6 +148,7 @@ You MUST respond in the following JSON format only, with no additional text:
 }
 
 Guidelines:
+- suggestedTitle: Create a concise, descriptive title (3-10 words) that captures the main topic or key concept
 - summary: Capture the essence and main arguments
 - keyInsights: Extract actionable or notable points that are worth remembering
 - suggestedTags: Suggest 3-5 relevant tags for categorization (single words or short phrases, no # prefix)
@@ -177,12 +181,13 @@ Provide your analysis in the specified JSON format.`;
       const parsed = JSON.parse(jsonMatch[0]);
 
       // Validate required fields
-      if (!parsed.summary || !Array.isArray(parsed.keyInsights)) {
+      if (!parsed.suggestedTitle || !parsed.summary || !Array.isArray(parsed.keyInsights)) {
         console.error('Missing required fields in response');
         return null;
       }
 
       return {
+        suggestedTitle: parsed.suggestedTitle,
         summary: parsed.summary,
         keyInsights: parsed.keyInsights || [],
         suggestedTags: parsed.suggestedTags || [],

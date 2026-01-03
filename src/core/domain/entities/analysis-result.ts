@@ -10,6 +10,7 @@ export interface AnalysisResultData {
   sourceType: SourceType;
   sourceContent: string;
   sourceUrl?: string;
+  suggestedTitle: string;
   summary: string;
   keyInsights: string[];
   suggestedTags: string[];
@@ -23,6 +24,7 @@ export class AnalysisResult {
   private readonly _sourceType: SourceType;
   private readonly _sourceContent: string;
   private readonly _sourceUrl?: string;
+  private readonly _suggestedTitle: string;
   private readonly _summary: string;
   private readonly _keyInsights: string[];
   private readonly _suggestedTags: string[];
@@ -35,6 +37,7 @@ export class AnalysisResult {
     this._sourceType = data.sourceType;
     this._sourceContent = data.sourceContent;
     this._sourceUrl = data.sourceUrl;
+    this._suggestedTitle = data.suggestedTitle;
     this._summary = data.summary;
     this._keyInsights = [...data.keyInsights];
     this._suggestedTags = [...data.suggestedTags];
@@ -76,6 +79,10 @@ export class AnalysisResult {
     return this._sourceUrl;
   }
 
+  get suggestedTitle(): string {
+    return this._suggestedTitle;
+  }
+
   get summary(): string {
     return this._summary;
   }
@@ -112,6 +119,30 @@ export class AnalysisResult {
   toMarkdown(): string {
     const lines: string[] = [];
 
+    // Frontmatter
+    lines.push('---');
+    lines.push(`created: ${this._createdAt.toISOString().split('T')[0]}`);
+    if (this._sourceUrl) {
+      lines.push(`source: "${this._sourceUrl}"`);
+    }
+    if (this._suggestedTags.length > 0) {
+      lines.push(`tags:`);
+      this._suggestedTags.forEach((tag) => {
+        lines.push(`  - ${tag}`);
+      });
+    }
+    if (this._relatedTopics.length > 0) {
+      lines.push(`topics:`);
+      this._relatedTopics.forEach((topic) => {
+        lines.push(`  - "${topic}"`);
+      });
+    }
+    lines.push(`analyzed_at: ${this._createdAt.toISOString()}`);
+    lines.push(`source_type: ${this._sourceType}`);
+    lines.push('---');
+    lines.push('');
+
+    // Content
     lines.push(`## Summary`);
     lines.push(this._summary);
     lines.push('');
@@ -127,14 +158,8 @@ export class AnalysisResult {
     if (this._relatedTopics.length > 0) {
       lines.push(`## Related Topics`);
       this._relatedTopics.forEach((topic) => {
-        lines.push(`- ${topic}`);
+        lines.push(`- [[${topic}]]`);
       });
-      lines.push('');
-    }
-
-    if (this._suggestedTags.length > 0) {
-      lines.push(`## Suggested Tags`);
-      lines.push(this._suggestedTags.map((tag) => `#${tag}`).join(' '));
       lines.push('');
     }
 
@@ -152,6 +177,7 @@ export class AnalysisResult {
       sourceType: this._sourceType,
       sourceContent: this._sourceContent,
       sourceUrl: this._sourceUrl,
+      suggestedTitle: this._suggestedTitle,
       summary: this._summary,
       keyInsights: [...this._keyInsights],
       suggestedTags: [...this._suggestedTags],
