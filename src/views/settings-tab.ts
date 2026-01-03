@@ -14,8 +14,8 @@ const FEATURE_LABELS: Record<FeatureType, { name: string; desc: string }> = {
     desc: 'URL/텍스트 분석 및 요약 (economy 모델 권장)',
   },
   'permanent-note': {
-    name: 'Permanent Note Generation',
-    desc: '영구 노트 생성 (standard/premium 모델 권장)',
+    name: 'Topic Suggestion',
+    desc: '영구 노트 토픽 제안 (standard/premium 모델 권장)',
   },
 };
 
