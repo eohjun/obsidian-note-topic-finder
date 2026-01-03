@@ -7,18 +7,18 @@ import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import type { AnalysisResult } from '../core/domain/entities/analysis-result';
 import type { Job } from '../core/domain/entities/job';
 import type { NoteTopic } from '../core/application';
-import type AIPKMCompanionPlugin from '../main';
+import type NoteTopicFinderPlugin from '../main';
 
-export const ANALYSIS_VIEW_TYPE = 'ai-pkm-analysis-view';
+export const ANALYSIS_VIEW_TYPE = 'note-topic-finder-view';
 
 export class AnalysisView extends ItemView {
-  private plugin: AIPKMCompanionPlugin;
+  private plugin: NoteTopicFinderPlugin;
   private currentResult: AnalysisResult | null = null;
   private currentJob: Job | null = null;
   private suggestedTopics: NoteTopic[] | null = null;
   private isSuggestingTopics: boolean = false;
 
-  constructor(leaf: WorkspaceLeaf, plugin: AIPKMCompanionPlugin) {
+  constructor(leaf: WorkspaceLeaf, plugin: NoteTopicFinderPlugin) {
     super(leaf);
     this.plugin = plugin;
   }
@@ -93,7 +93,7 @@ export class AnalysisView extends ItemView {
   private render(): void {
     const container = this.containerEl.children[1] as HTMLElement;
     container.empty();
-    container.addClass('ai-pkm-analysis-view');
+    container.addClass('note-topic-finder-view');
 
     // Header
     const header = container.createDiv({ cls: 'view-header' });

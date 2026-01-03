@@ -31,7 +31,7 @@ export class AnalyzeModal extends Modal {
 
   onOpen(): void {
     const { contentEl, modalEl } = this;
-    modalEl.addClass('mod-ai-pkm-analyze');
+    modalEl.addClass('mod-note-topic-finder');
     contentEl.empty();
 
     contentEl.createEl('h2', { text: 'Analyze Content' });

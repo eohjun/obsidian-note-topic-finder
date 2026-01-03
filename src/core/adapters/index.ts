@@ -1,6 +1,6 @@
 /**
  * Adapters Layer
- * External integrations for the AI-PKM Companion plugin
+ * External integrations for the Note Topic Finder plugin
  */
 
 // LLM Providers

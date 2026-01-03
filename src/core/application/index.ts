@@ -1,6 +1,6 @@
 /**
  * Application Layer
- * Use cases and services for the AI-PKM Companion plugin
+ * Use cases and services for the Note Topic Finder plugin
  */
 
 // Services

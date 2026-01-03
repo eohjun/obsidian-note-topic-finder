@@ -6,7 +6,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type { AIProviderType, AISettings, FeatureType } from '../core/domain/interfaces/llm-provider';
 import { AI_PROVIDERS, getModelsByProvider, FEATURE_DEFAULT_MODELS } from '../core/domain/constants/model-configs';
-import type AIPKMCompanionPlugin from '../main';
+import type NoteTopicFinderPlugin from '../main';
 
 const FEATURE_LABELS: Record<FeatureType, { name: string; desc: string }> = {
   'content-analysis': {
@@ -20,9 +20,9 @@ const FEATURE_LABELS: Record<FeatureType, { name: string; desc: string }> = {
 };
 
 export class SettingsTab extends PluginSettingTab {
-  plugin: AIPKMCompanionPlugin;
+  plugin: NoteTopicFinderPlugin;
 
-  constructor(app: App, plugin: AIPKMCompanionPlugin) {
+  constructor(app: App, plugin: NoteTopicFinderPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -31,7 +31,7 @@ export class SettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'AI-PKM Companion Settings' });
+    containerEl.createEl('h2', { text: 'Note Topic Finder Settings' });
 
     // API Keys
     this.renderApiKeySection(containerEl);

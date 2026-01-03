@@ -1,9 +1,9 @@
 {
-  "id": "ai-pkm-companion",
-  "name": "AI-PKM Companion",
-  "version": "0.3.1",
+  "id": "note-topic-finder",
+  "name": "Note Topic Finder",
+  "version": "0.4.0",
   "minAppVersion": "1.5.0",
-  "description": "AI-powered PKM companion - content analysis, permanent note generation using LLM",
+  "description": "Analyze content and discover permanent note topics from URLs and text",
   "author": "eohjun",
   "authorUrl": "https://github.com/eohjun",
   "isDesktopOnly": false

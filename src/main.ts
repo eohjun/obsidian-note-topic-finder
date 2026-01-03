@@ -1,5 +1,5 @@
 /**
- * AI-PKM Companion Plugin
+ * Note Topic Finder Plugin
  * Main entry point
  */
 
@@ -54,7 +54,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
   outputFolder: '',
 };
 
-export default class AIPKMCompanionPlugin extends Plugin {
+export default class NoteTopicFinderPlugin extends Plugin {
   settings!: PluginSettings;
   private aiService!: AIService;
   private costTracker!: CostTracker;
@@ -69,13 +69,13 @@ export default class AIPKMCompanionPlugin extends Plugin {
     this.addSettingTab(new SettingsTab(this.app, this));
     this.setupRibbonIcon();
 
-    console.log('AI-PKM Companion loaded');
+    console.log('Note Topic Finder loaded');
   }
 
   async onunload(): Promise<void> {
     resetAIService();
     resetEventEmitter();
-    console.log('AI-PKM Companion unloaded');
+    console.log('Note Topic Finder unloaded');
   }
 
   private initializeServices(): void {
@@ -158,7 +158,7 @@ export default class AIPKMCompanionPlugin extends Plugin {
   }
 
   private setupRibbonIcon(): void {
-    this.addRibbonIcon('sparkles', 'AI-PKM Companion', () => {
+    this.addRibbonIcon('sparkles', 'Note Topic Finder', () => {
       this.openAnalyzeModal();
     });
   }

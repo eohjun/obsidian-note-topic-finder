@@ -1,6 +1,6 @@
 /**
  * Core Module
- * Clean Architecture layers for the AI-PKM Companion plugin
+ * Clean Architecture layers for the Note Topic Finder plugin
  */
 
 // Domain Layer
