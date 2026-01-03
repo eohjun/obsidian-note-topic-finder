@@ -217,8 +217,14 @@ export default class NoteTopicFinderPlugin extends Plugin {
       });
     }
 
-    // Allow DOM to render before starting analysis
-    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 100)));
+    // Double rAF ensures DOM is painted before continuing
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
 
     try {
       // Fetch URL content if needed
