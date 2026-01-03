@@ -128,7 +128,9 @@ export class AnalysisResult {
     if (this._suggestedTags.length > 0) {
       lines.push(`tags:`);
       this._suggestedTags.forEach((tag) => {
-        lines.push(`  - ${tag}`);
+        // Replace spaces with underscores for valid tag format
+        const formattedTag = tag.replace(/\s+/g, '_');
+        lines.push(`  - ${formattedTag}`);
       });
     }
     if (this._relatedTopics.length > 0) {
@@ -151,14 +153,6 @@ export class AnalysisResult {
       lines.push(`## Key Insights`);
       this._keyInsights.forEach((insight) => {
         lines.push(`- ${insight}`);
-      });
-      lines.push('');
-    }
-
-    if (this._relatedTopics.length > 0) {
-      lines.push(`## Related Topics`);
-      this._relatedTopics.forEach((topic) => {
-        lines.push(`- [[${topic}]]`);
       });
       lines.push('');
     }
