@@ -1,0 +1,283 @@
+/**
+ * AI-PKM Companion Plugin
+ * Main entry point
+ */
+
+import { Plugin, Notice, requestUrl } from 'obsidian';
+import type { AIProviderType, AISettings } from './core/domain/interfaces/llm-provider';
+import { AI_PROVIDERS } from './core/domain/constants/model-configs';
+import {
+  AIService,
+  initializeAIService,
+  updateAIServiceSettings,
+  resetAIService,
+  CostTracker,
+  getEventEmitter,
+  resetEventEmitter,
+  JobQueue,
+  AnalyzeContentUseCase,
+} from './core/application';
+import { createLLMProvider, createAllProviders } from './core/adapters';
+import { SettingsTab, AnalyzeModal, AnalysisView, ANALYSIS_VIEW_TYPE } from './views';
+import type { AnalyzeModalResult } from './views';
+
+interface PluginSettings {
+  ai: AISettings;
+}
+
+const DEFAULT_SETTINGS: PluginSettings = {
+  ai: {
+    provider: 'openai',
+    apiKeys: {},
+    models: {
+      claude: 'claude-sonnet-4-20250514',
+      gemini: 'gemini-2.0-flash',
+      openai: 'gpt-4o-mini',
+      grok: 'grok-3-mini',
+    },
+    defaultLanguage: 'auto',
+    budgetLimit: undefined,
+  },
+};
+
+export default class AIPKMCompanionPlugin extends Plugin {
+  settings!: PluginSettings;
+  private aiService!: AIService;
+  private costTracker!: CostTracker;
+  private jobQueue!: JobQueue;
+  private analysisView: AnalysisView | null = null;
+
+  async onload(): Promise<void> {
+    await this.loadSettings();
+    this.initializeServices();
+    this.registerViews();
+    this.registerCommands();
+    this.addSettingTab(new SettingsTab(this.app, this));
+    this.setupRibbonIcon();
+
+    console.log('AI-PKM Companion loaded');
+  }
+
+  async onunload(): Promise<void> {
+    resetAIService();
+    resetEventEmitter();
+    console.log('AI-PKM Companion unloaded');
+  }
+
+  private initializeServices(): void {
+    // Initialize EventEmitter
+    const emitter = getEventEmitter();
+
+    // Initialize Cost Tracker
+    this.costTracker = new CostTracker(this.settings.ai.budgetLimit, emitter);
+
+    // Initialize AI Service
+    this.aiService = initializeAIService(this.settings.ai);
+
+    // Register all providers
+    const providers = createAllProviders();
+    providers.forEach((provider) => {
+      this.aiService.registerProvider(provider);
+    });
+
+    // Initialize Job Queue
+    this.jobQueue = new JobQueue(emitter);
+
+    // Subscribe to events
+    emitter.on('job:progress', ({ jobId, progress, message }) => {
+      if (this.analysisView) {
+        this.analysisView.updateProgress(progress, message);
+      }
+    });
+
+    emitter.on('cost:updated', ({ totalSpend, budgetLimit }) => {
+      if (budgetLimit && totalSpend >= budgetLimit * 0.9) {
+        new Notice(`Warning: Budget usage at ${((totalSpend / budgetLimit) * 100).toFixed(0)}%`);
+      }
+    });
+  }
+
+  private registerViews(): void {
+    this.registerView(ANALYSIS_VIEW_TYPE, (leaf) => {
+      this.analysisView = new AnalysisView(leaf, this);
+      return this.analysisView;
+    });
+  }
+
+  private registerCommands(): void {
+    // Open analysis modal
+    this.addCommand({
+      id: 'analyze-content',
+      name: 'Analyze content',
+      callback: () => this.openAnalyzeModal(),
+    });
+
+    // Analyze clipboard content
+    this.addCommand({
+      id: 'analyze-clipboard',
+      name: 'Analyze clipboard content',
+      callback: () => this.analyzeClipboard(),
+    });
+
+    // Open analysis view
+    this.addCommand({
+      id: 'open-analysis-view',
+      name: 'Open analysis view',
+      callback: () => this.activateView(),
+    });
+  }
+
+  private setupRibbonIcon(): void {
+    this.addRibbonIcon('sparkles', 'AI-PKM Companion', () => {
+      this.openAnalyzeModal();
+    });
+  }
+
+  public openAnalyzeModal(): void {
+    new AnalyzeModal(this.app, async (result) => {
+      await this.analyzeContent(result);
+    }).open();
+  }
+
+  private async analyzeClipboard(): Promise<void> {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        new Notice('Clipboard is empty');
+        return;
+      }
+
+      // Check if it's a URL
+      let sourceType: 'url' | 'text' = 'text';
+      try {
+        new URL(text);
+        sourceType = 'url';
+      } catch {
+        // Not a URL
+      }
+
+      await this.analyzeContent({
+        content: text,
+        sourceType,
+        sourceUrl: sourceType === 'url' ? text : undefined,
+        language: this.settings.ai.defaultLanguage,
+        detailLevel: 'standard',
+      });
+    } catch (error) {
+      new Notice('Failed to read clipboard');
+    }
+  }
+
+  private async analyzeContent(input: AnalyzeModalResult): Promise<void> {
+    // Ensure view is open
+    await this.activateView();
+
+    // Show loading state
+    if (this.analysisView) {
+      this.analysisView.showProgress({
+        id: 'temp',
+        type: 'analyze-content',
+        status: 'running',
+        progress: 0,
+        priority: 1,
+        createdAt: new Date(),
+        retryCount: 0,
+        maxRetries: 3,
+        data: input,
+      });
+    }
+
+    try {
+      // Fetch URL content if needed
+      let content = input.content;
+      if (input.sourceType === 'url') {
+        content = await this.fetchUrlContent(input.content);
+      }
+
+      // Create use case and execute
+      const useCase = new AnalyzeContentUseCase(this.aiService, this.costTracker);
+      const response = await useCase.execute({
+        content,
+        sourceType: input.sourceType,
+        sourceUrl: input.sourceUrl,
+        language: input.language,
+        detailLevel: input.detailLevel,
+      });
+
+      if (response.success && response.result) {
+        if (this.analysisView) {
+          this.analysisView.showResult(response.result);
+        }
+        new Notice('Analysis complete');
+      } else {
+        if (this.analysisView) {
+          this.analysisView.showError(response.error || 'Analysis failed');
+        }
+        new Notice(`Analysis failed: ${response.error}`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      if (this.analysisView) {
+        this.analysisView.showError(errorMsg);
+      }
+      new Notice(`Analysis error: ${errorMsg}`);
+    }
+  }
+
+  private async fetchUrlContent(url: string): Promise<string> {
+    try {
+      const response = await requestUrl({ url });
+      // Basic HTML to text extraction
+      const html = response.text;
+      // Remove scripts, styles, and HTML tags
+      const text = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return text.slice(0, 50000); // Limit content length
+    } catch (error) {
+      throw new Error(`Failed to fetch URL: ${error}`);
+    }
+  }
+
+  private async activateView(): Promise<void> {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(ANALYSIS_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        leaf = rightLeaf;
+        await leaf.setViewState({ type: ANALYSIS_VIEW_TYPE, active: true });
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  public async testApiKey(provider: AIProviderType): Promise<boolean> {
+    const llmProvider = createLLMProvider(provider);
+    const apiKey = this.settings.ai.apiKeys[provider];
+    if (!apiKey) return false;
+    return llmProvider.testApiKey(apiKey);
+  }
+
+  public getCurrentSpend(): number {
+    return this.costTracker.getCurrentSpend();
+  }
+
+  async loadSettings(): Promise<void> {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.settings);
+    updateAIServiceSettings(this.settings.ai);
+    this.costTracker.setBudgetLimit(this.settings.ai.budgetLimit);
+  }
+}

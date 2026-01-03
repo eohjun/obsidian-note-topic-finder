@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "module": "ESNext",
+    "target": "ES6",
+    "allowJs": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "importHelpers": false,
+    "isolatedModules": false,
+    "strictPropertyInitialization": false,
+    "lib": [
+      "DOM",
+      "ES2017",
+      "ES2018"
+    ],
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@domain/*": ["src/core/domain/*"],
+      "@application/*": ["src/core/application/*"],
+      "@adapters/*": ["src/core/adapters/*"],
+      "@views/*": ["src/views/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
