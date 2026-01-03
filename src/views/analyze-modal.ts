@@ -23,7 +23,6 @@ export class AnalyzeModal extends Modal {
   private content: string = '';
   private sourceUrl: string = '';
   private selectedNote: TFile | null = null;
-  private useCurrentNote: boolean = true;
   private language: string = 'auto';
   private detailLevel: 'brief' | 'standard' | 'detailed' = 'standard';
 
@@ -150,59 +149,17 @@ export class AnalyzeModal extends Modal {
   private renderNoteSelection(container: HTMLElement): void {
     const currentFile = this.app.workspace.getActiveFile();
 
-    // Current note option
-    new Setting(container)
-      .setName('Use current note')
-      .setDesc(currentFile ? `Current: ${currentFile.basename}` : 'No note is currently open')
-      .addToggle((toggle) => {
-        toggle
-          .setValue(this.useCurrentNote)
-          .setDisabled(!currentFile)
-          .onChange((value) => {
-            this.useCurrentNote = value;
-            if (value && currentFile) {
-              this.selectedNote = currentFile;
-            }
-            this.renderNoteSelection(container);
-          });
-      });
-
-    if (this.useCurrentNote && currentFile) {
+    if (currentFile) {
       this.selectedNote = currentFile;
-    }
-
-    // Note search/selection (when not using current note)
-    if (!this.useCurrentNote) {
-      const searchContainer = container.createDiv({ cls: 'note-search-container' });
-
-      new Setting(searchContainer)
-        .setName('Select note')
-        .setDesc('Search for a note to analyze')
-        .addDropdown((dropdown) => {
-          const files = this.app.vault.getMarkdownFiles()
-            .sort((a, b) => b.stat.mtime - a.stat.mtime)
-            .slice(0, 50); // Limit to 50 most recent notes
-
-          dropdown.addOption('', '-- Select a note --');
-          files.forEach((file) => {
-            dropdown.addOption(file.path, file.basename);
-          });
-
-          if (this.selectedNote) {
-            dropdown.setValue(this.selectedNote.path);
-          }
-
-          dropdown.onChange((value) => {
-            if (value) {
-              const file = this.app.vault.getAbstractFileByPath(value);
-              if (file instanceof TFile) {
-                this.selectedNote = file;
-              }
-            } else {
-              this.selectedNote = null;
-            }
-          });
-        });
+      new Setting(container)
+        .setName('Current Note')
+        .setDesc(currentFile.path);
+    } else {
+      this.selectedNote = null;
+      const warning = container.createDiv({ cls: 'note-warning' });
+      warning.style.color = 'var(--text-error)';
+      warning.style.padding = '10px';
+      warning.setText('No note is currently open. Please open a note first.');
     }
   }
 
