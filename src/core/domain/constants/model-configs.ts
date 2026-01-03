@@ -61,7 +61,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
 
   // Gemini Models
   'gemini-3-pro': {
-    id: 'gemini-3-pro',
+    id: 'gemini-3-pro-preview',
     displayName: 'Gemini 3 Pro',
     provider: 'gemini',
     tier: 'premium',
@@ -73,7 +73,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsStreaming: true,
   },
   'gemini-3-flash': {
-    id: 'gemini-3-flash',
+    id: 'gemini-3-flash-preview',
     displayName: 'Gemini 3 Flash',
     provider: 'gemini',
     tier: 'standard',
@@ -179,7 +179,7 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta',
     apiKeyPrefix: 'AIza',
-    defaultModel: 'gemini-3-flash',
+    defaultModel: 'gemini-3-flash-preview',
   },
   openai: {
     id: 'openai',
@@ -210,7 +210,7 @@ export const FEATURE_DEFAULT_MODELS: Record<FeatureType, Record<AIProviderType, 
   },
   'permanent-note': {
     claude: 'claude-sonnet-4-5-20250929',
-    gemini: 'gemini-3-flash',
+    gemini: 'gemini-3-flash-preview',
     openai: 'gpt-5.2',
     grok: 'grok-3',
   },
