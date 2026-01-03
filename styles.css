@@ -34,10 +34,25 @@
   margin: 5px 0;
 }
 
+/* Progress Overlay */
+.note-topic-finder-view .progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-primary);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Progress */
 .note-topic-finder-view .progress-container {
   padding: 20px;
   text-align: center;
+  width: 100%;
 }
 
 .note-topic-finder-view .progress-bar {

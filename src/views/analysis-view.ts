@@ -18,6 +18,10 @@ export class AnalysisView extends ItemView {
   private suggestedTopics: NoteTopic[] | null = null;
   private isSuggestingTopics: boolean = false;
 
+  // Progress overlay elements (direct DOM references)
+  private progressOverlayEl: HTMLElement | null = null;
+  private progressTextEl: HTMLElement | null = null;
+
   constructor(leaf: WorkspaceLeaf, plugin: NoteTopicFinderPlugin) {
     super(leaf);
     this.plugin = plugin;
@@ -44,6 +48,7 @@ export class AnalysisView extends ItemView {
   }
 
   public showResult(result: AnalysisResult): void {
+    this.hideProgressOverlay();
     this.currentResult = result;
     this.currentJob = null;
     this.suggestedTopics = null;
@@ -52,6 +57,7 @@ export class AnalysisView extends ItemView {
   }
 
   public showTopicSuggestions(topics: NoteTopic[]): void {
+    this.hideProgressOverlay();
     this.suggestedTopics = topics;
     this.isSuggestingTopics = false;
     this.render();
@@ -59,35 +65,76 @@ export class AnalysisView extends ItemView {
 
   public setSuggestingTopics(suggesting: boolean): void {
     this.isSuggestingTopics = suggesting;
-    this.render();
+    if (suggesting) {
+      this.showProgressOverlay('Finding Note Topics...', 'Analyzing content for permanent note candidates...');
+    } else {
+      this.hideProgressOverlay();
+    }
   }
 
   public showProgress(job: Job): void {
     this.currentJob = job;
-    this.render();
+    this.showProgressOverlay('Analyzing...', 'Processing content with AI...');
   }
 
   public updateProgress(progress: number, message?: string): void {
-    const progressBar = this.containerEl.querySelector('.progress-fill');
-    const progressText = this.containerEl.querySelector('.progress-text');
-
-    if (progressBar instanceof HTMLElement) {
-      progressBar.style.width = `${progress}%`;
-    }
-    if (progressText instanceof HTMLElement && message) {
-      progressText.textContent = message;
+    if (this.progressTextEl && message) {
+      this.progressTextEl.textContent = message;
     }
   }
 
   public showError(error: string): void {
+    this.hideProgressOverlay();
     this.currentJob = null;
     this.currentResult = null;
-    this.render();
 
     const container = this.containerEl.children[1] as HTMLElement;
     container.empty();
-    container.createEl('h4', { text: 'Analysis Error' });
+    container.addClass('note-topic-finder-view');
+
+    // Header
+    const header = container.createDiv({ cls: 'view-header' });
+    header.createEl('h4', { text: 'AI Analysis' });
+    const actions = header.createDiv({ cls: 'view-actions' });
+    const newAnalysisBtn = actions.createEl('button', { cls: 'clickable-icon' });
+    setIcon(newAnalysisBtn, 'plus');
+    newAnalysisBtn.title = 'New Analysis';
+    newAnalysisBtn.onclick = () => this.plugin.openAnalyzeModal();
+
     container.createEl('p', { text: error, cls: 'error-message' });
+  }
+
+  /**
+   * Show progress overlay without re-rendering entire view
+   * This is the key technique from obsidian-embedder
+   */
+  private showProgressOverlay(title: string, message: string): void {
+    const container = this.containerEl.children[1] as HTMLElement;
+
+    // Remove existing overlay if any
+    this.hideProgressOverlay();
+
+    // Create overlay element
+    this.progressOverlayEl = container.createDiv({ cls: 'progress-overlay' });
+
+    const progressContainer = this.progressOverlayEl.createDiv({ cls: 'progress-container' });
+    progressContainer.createEl('h5', { text: title });
+
+    const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
+    progressBar.createDiv({ cls: 'progress-fill indeterminate' });
+
+    this.progressTextEl = progressContainer.createEl('p', { cls: 'progress-text', text: message });
+  }
+
+  /**
+   * Hide progress overlay
+   */
+  private hideProgressOverlay(): void {
+    if (this.progressOverlayEl) {
+      this.progressOverlayEl.remove();
+      this.progressOverlayEl = null;
+      this.progressTextEl = null;
+    }
   }
 
   private render(): void {
@@ -106,12 +153,8 @@ export class AnalysisView extends ItemView {
     newAnalysisBtn.title = 'New Analysis';
     newAnalysisBtn.onclick = () => this.plugin.openAnalyzeModal();
 
-    // Content
-    if (this.currentJob && this.currentJob.status === 'running') {
-      this.renderProgress(container);
-    } else if (this.isSuggestingTopics) {
-      this.renderSuggestingTopics(container);
-    } else if (this.suggestedTopics && this.suggestedTopics.length > 0) {
+    // Content - no longer handle progress here
+    if (this.suggestedTopics && this.suggestedTopics.length > 0) {
       this.renderTopicSuggestions(container);
     } else if (this.currentResult) {
       this.renderResult(container);
@@ -126,17 +169,6 @@ export class AnalysisView extends ItemView {
     emptyState.createEl('p', { text: 'Click the + button or use the command palette to start analyzing content.' });
   }
 
-  private renderProgress(container: HTMLElement): void {
-    const progressContainer = container.createDiv({ cls: 'progress-container' });
-
-    progressContainer.createEl('h5', { text: 'Analyzing...' });
-
-    const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
-    const progressFill = progressBar.createDiv({ cls: 'progress-fill indeterminate' });
-
-    progressContainer.createEl('p', { cls: 'progress-text', text: 'Processing content with AI...' });
-  }
-
   private renderResult(container: HTMLElement): void {
     if (!this.currentResult) return;
 
@@ -149,6 +181,10 @@ export class AnalysisView extends ItemView {
       sourceEl.createEl('strong', { text: 'Source: ' });
       const link = sourceEl.createEl('a', { text: result.sourceUrl, href: result.sourceUrl });
       link.setAttr('target', '_blank');
+    } else if (result.sourcePath) {
+      const sourceEl = resultContainer.createEl('p', { cls: 'source-info' });
+      sourceEl.createEl('strong', { text: 'Source Note: ' });
+      sourceEl.createSpan({ text: result.sourcePath });
     }
 
     // Summary
@@ -201,17 +237,6 @@ export class AnalysisView extends ItemView {
 
     const suggestBtn = actionButtons.createEl('button', { text: 'Suggest Note Topics', cls: 'mod-cta' });
     suggestBtn.onclick = () => this.plugin.suggestNoteTopics(result);
-  }
-
-  private renderSuggestingTopics(container: HTMLElement): void {
-    const progressContainer = container.createDiv({ cls: 'progress-container' });
-
-    progressContainer.createEl('h5', { text: 'Finding Note Topics...' });
-
-    const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
-    progressBar.createDiv({ cls: 'progress-fill indeterminate' });
-
-    progressContainer.createEl('p', { cls: 'progress-text', text: 'Analyzing content for permanent note candidates...' });
   }
 
   private renderTopicSuggestions(container: HTMLElement): void {
