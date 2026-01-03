@@ -36,15 +36,15 @@
   margin: 5px 0;
 }
 
-/* Progress Overlay */
+/* Loading Overlay - covers entire content area */
 .note-topic-finder-view .progress-overlay {
   position: absolute;
   top: 50px;
   left: 0;
   right: 0;
+  bottom: 0;
   background: var(--background-primary);
   z-index: 10;
-  padding: 40px 20px;
 }
 
 /* Loading State */
