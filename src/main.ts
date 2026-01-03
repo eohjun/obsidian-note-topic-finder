@@ -189,6 +189,9 @@ export default class AIPKMCompanionPlugin extends Plugin {
       });
     }
 
+    // Allow DOM to render before starting analysis
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     try {
       // Fetch URL content if needed
       let content = input.content;
