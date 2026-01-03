@@ -55,6 +55,20 @@
   transition: width 0.3s ease;
 }
 
+.ai-pkm-analysis-view .progress-fill.indeterminate {
+  width: 30% !important;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
 .ai-pkm-analysis-view .progress-text {
   color: var(--text-muted);
   font-size: 0.9em;

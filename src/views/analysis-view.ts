@@ -112,10 +112,9 @@ export class AnalysisView extends ItemView {
     progressContainer.createEl('h5', { text: 'Analyzing...' });
 
     const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
-    const progressFill = progressBar.createDiv({ cls: 'progress-fill' });
-    progressFill.style.width = `${this.currentJob?.progress || 0}%`;
+    const progressFill = progressBar.createDiv({ cls: 'progress-fill indeterminate' });
 
-    progressContainer.createEl('p', { cls: 'progress-text', text: 'Processing content...' });
+    progressContainer.createEl('p', { cls: 'progress-text', text: 'Processing content with AI...' });
   }
 
   private renderResult(container: HTMLElement): void {

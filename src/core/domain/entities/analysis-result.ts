@@ -154,12 +154,6 @@ export class AnalysisResult {
       this._keyInsights.forEach((insight) => {
         lines.push(`- ${insight}`);
       });
-      lines.push('');
-    }
-
-    if (this._sourceUrl) {
-      lines.push(`## Source`);
-      lines.push(`[${this._sourceUrl}](${this._sourceUrl})`);
     }
 
     return lines.join('\n');
