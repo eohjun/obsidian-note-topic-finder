@@ -218,7 +218,7 @@ export default class NoteTopicFinderPlugin extends Plugin {
     }
 
     // Allow DOM to render before starting analysis
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 100)));
 
     try {
       // Fetch URL content if needed

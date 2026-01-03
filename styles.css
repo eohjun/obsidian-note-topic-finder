@@ -1,11 +1,11 @@
 /* AI-PKM Companion Styles */
 
 /* Analysis View */
-.ai-pkm-analysis-view {
+.note-topic-finder-view {
   padding: 10px;
 }
 
-.ai-pkm-analysis-view .view-header {
+.note-topic-finder-view .view-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,33 +14,33 @@
   padding-bottom: 10px;
 }
 
-.ai-pkm-analysis-view .view-header h4 {
+.note-topic-finder-view .view-header h4 {
   margin: 0;
 }
 
-.ai-pkm-analysis-view .view-actions {
+.note-topic-finder-view .view-actions {
   display: flex;
   gap: 5px;
 }
 
 /* Empty State */
-.ai-pkm-analysis-view .empty-state {
+.note-topic-finder-view .empty-state {
   text-align: center;
   color: var(--text-muted);
   padding: 40px 20px;
 }
 
-.ai-pkm-analysis-view .empty-state p {
+.note-topic-finder-view .empty-state p {
   margin: 5px 0;
 }
 
 /* Progress */
-.ai-pkm-analysis-view .progress-container {
+.note-topic-finder-view .progress-container {
   padding: 20px;
   text-align: center;
 }
 
-.ai-pkm-analysis-view .progress-bar {
+.note-topic-finder-view .progress-bar {
   height: 6px;
   background: var(--background-modifier-border);
   border-radius: 3px;
@@ -48,14 +48,14 @@
   margin: 15px 0;
 }
 
-.ai-pkm-analysis-view .progress-fill {
+.note-topic-finder-view .progress-fill {
   height: 100%;
   background: var(--interactive-accent);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.ai-pkm-analysis-view .progress-fill.indeterminate {
+.note-topic-finder-view .progress-fill.indeterminate {
   width: 30% !important;
   animation: progress-indeterminate 1.5s ease-in-out infinite;
 }
@@ -69,56 +69,56 @@
   }
 }
 
-.ai-pkm-analysis-view .progress-text {
+.note-topic-finder-view .progress-text {
   color: var(--text-muted);
   font-size: 0.9em;
 }
 
 /* Result Container */
-.ai-pkm-analysis-view .result-container {
+.note-topic-finder-view .result-container {
   padding: 10px 0;
 }
 
-.ai-pkm-analysis-view .result-container h5 {
+.note-topic-finder-view .result-container h5 {
   margin: 15px 0 8px 0;
   color: var(--text-normal);
   font-size: 0.95em;
 }
 
-.ai-pkm-analysis-view .source-info {
+.note-topic-finder-view .source-info {
   font-size: 0.85em;
   color: var(--text-muted);
   margin-bottom: 15px;
   word-break: break-all;
 }
 
-.ai-pkm-analysis-view .source-info a {
+.note-topic-finder-view .source-info a {
   color: var(--text-accent);
 }
 
-.ai-pkm-analysis-view .summary-text {
+.note-topic-finder-view .summary-text {
   line-height: 1.6;
   color: var(--text-normal);
 }
 
-.ai-pkm-analysis-view .insights-list {
+.note-topic-finder-view .insights-list {
   padding-left: 20px;
   margin: 0;
 }
 
-.ai-pkm-analysis-view .insights-list li {
+.note-topic-finder-view .insights-list li {
   margin: 5px 0;
   line-height: 1.5;
 }
 
 /* Tags */
-.ai-pkm-analysis-view .tags-container {
+.note-topic-finder-view .tags-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.ai-pkm-analysis-view .tag {
+.note-topic-finder-view .tag {
   background: var(--background-secondary);
   color: var(--text-accent);
   padding: 3px 8px;
@@ -128,18 +128,18 @@
   transition: background 0.2s ease;
 }
 
-.ai-pkm-analysis-view .tag:hover {
+.note-topic-finder-view .tag:hover {
   background: var(--background-modifier-hover);
 }
 
 /* Topics */
-.ai-pkm-analysis-view .topics-container {
+.note-topic-finder-view .topics-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.ai-pkm-analysis-view .topic {
+.note-topic-finder-view .topic {
   background: var(--background-modifier-border);
   color: var(--text-muted);
   padding: 3px 8px;
@@ -148,7 +148,7 @@
 }
 
 /* Action Buttons */
-.ai-pkm-analysis-view .action-buttons {
+.note-topic-finder-view .action-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -157,14 +157,14 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-.ai-pkm-analysis-view .action-buttons button {
+.note-topic-finder-view .action-buttons button {
   flex: 1;
   min-width: 120px;
   padding: 8px 12px;
 }
 
 /* Error Message */
-.ai-pkm-analysis-view .error-message {
+.note-topic-finder-view .error-message {
   color: var(--text-error);
   background: var(--background-modifier-error);
   padding: 10px;
