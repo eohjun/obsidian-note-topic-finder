@@ -3,13 +3,14 @@
  * Represents the result of LLM content analysis
  */
 
-export type SourceType = 'url' | 'text';
+export type SourceType = 'url' | 'text' | 'note';
 
 export interface AnalysisResultData {
   id: string;
   sourceType: SourceType;
   sourceContent: string;
   sourceUrl?: string;
+  sourcePath?: string;
   suggestedTitle: string;
   summary: string;
   keyInsights: string[];
@@ -24,6 +25,7 @@ export class AnalysisResult {
   private readonly _sourceType: SourceType;
   private readonly _sourceContent: string;
   private readonly _sourceUrl?: string;
+  private readonly _sourcePath?: string;
   private readonly _suggestedTitle: string;
   private readonly _summary: string;
   private readonly _keyInsights: string[];
@@ -37,6 +39,7 @@ export class AnalysisResult {
     this._sourceType = data.sourceType;
     this._sourceContent = data.sourceContent;
     this._sourceUrl = data.sourceUrl;
+    this._sourcePath = data.sourcePath;
     this._suggestedTitle = data.suggestedTitle;
     this._summary = data.summary;
     this._keyInsights = [...data.keyInsights];
@@ -77,6 +80,10 @@ export class AnalysisResult {
 
   get sourceUrl(): string | undefined {
     return this._sourceUrl;
+  }
+
+  get sourcePath(): string | undefined {
+    return this._sourcePath;
   }
 
   get suggestedTitle(): string {
@@ -125,6 +132,9 @@ export class AnalysisResult {
     if (this._sourceUrl) {
       lines.push(`source: "${this._sourceUrl}"`);
     }
+    if (this._sourcePath) {
+      lines.push(`source_note: "[[${this._sourcePath.replace(/\.md$/, '')}]]"`);
+    }
     if (this._suggestedTags.length > 0) {
       lines.push(`tags:`);
       this._suggestedTags.forEach((tag) => {
@@ -165,6 +175,7 @@ export class AnalysisResult {
       sourceType: this._sourceType,
       sourceContent: this._sourceContent,
       sourceUrl: this._sourceUrl,
+      sourcePath: this._sourcePath,
       suggestedTitle: this._suggestedTitle,
       summary: this._summary,
       keyInsights: [...this._keyInsights],

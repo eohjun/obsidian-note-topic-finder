@@ -233,6 +233,7 @@ export default class NoteTopicFinderPlugin extends Plugin {
         content,
         sourceType: input.sourceType,
         sourceUrl: input.sourceUrl,
+        sourcePath: input.sourcePath,
         language: input.language,
         detailLevel: input.detailLevel,
       });

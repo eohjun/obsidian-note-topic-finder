@@ -14,6 +14,7 @@ export interface AnalyzeContentRequest {
   content: string;
   sourceType: SourceType;
   sourceUrl?: string;
+  sourcePath?: string;
   language?: string;
   detailLevel?: 'brief' | 'standard' | 'detailed';
 }
@@ -43,7 +44,7 @@ export class AnalyzeContentUseCase {
   }
 
   async execute(request: AnalyzeContentRequest): Promise<AnalyzeContentResponse> {
-    const { content, sourceType, sourceUrl, language = 'auto', detailLevel = 'standard' } = request;
+    const { content, sourceType, sourceUrl, sourcePath, language = 'auto', detailLevel = 'standard' } = request;
 
     // Validate content length
     const estimatedTokens = estimateTokens(content);
@@ -58,7 +59,7 @@ export class AnalyzeContentUseCase {
     const systemPrompt = this.buildSystemPrompt(language, detailLevel);
 
     // Build user prompt
-    const userPrompt = this.buildUserPrompt(content, sourceType, sourceUrl);
+    const userPrompt = this.buildUserPrompt(content, sourceType, sourceUrl, sourcePath);
 
     // Call LLM
     try {
@@ -100,6 +101,7 @@ export class AnalyzeContentUseCase {
         sourceType,
         sourceContent: content.slice(0, 1000), // Store first 1000 chars
         sourceUrl,
+        sourcePath,
         suggestedTitle: parsed.suggestedTitle,
         summary: parsed.summary,
         keyInsights: parsed.keyInsights,
@@ -155,10 +157,13 @@ Guidelines:
 - relatedTopics: Suggest 2-4 related topics or concepts for further exploration`;
   }
 
-  private buildUserPrompt(content: string, sourceType: SourceType, sourceUrl?: string): string {
-    const sourceInfo = sourceType === 'url' && sourceUrl
-      ? `Source URL: ${sourceUrl}\n\n`
-      : '';
+  private buildUserPrompt(content: string, sourceType: SourceType, sourceUrl?: string, sourcePath?: string): string {
+    let sourceInfo = '';
+    if (sourceType === 'url' && sourceUrl) {
+      sourceInfo = `Source URL: ${sourceUrl}\n\n`;
+    } else if (sourceType === 'note' && sourcePath) {
+      sourceInfo = `Source Note: ${sourcePath}\n\n`;
+    }
 
     return `${sourceInfo}Please analyze the following content:
 
