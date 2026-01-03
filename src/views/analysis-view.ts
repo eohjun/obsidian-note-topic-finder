@@ -6,6 +6,7 @@
 import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import type { AnalysisResult } from '../core/domain/entities/analysis-result';
 import type { Job } from '../core/domain/entities/job';
+import type { PermanentNoteContent } from '../core/application';
 import type AIPKMCompanionPlugin from '../main';
 
 export const ANALYSIS_VIEW_TYPE = 'ai-pkm-analysis-view';
@@ -14,6 +15,9 @@ export class AnalysisView extends ItemView {
   private plugin: AIPKMCompanionPlugin;
   private currentResult: AnalysisResult | null = null;
   private currentJob: Job | null = null;
+  private permanentNote: PermanentNoteContent | null = null;
+  private permanentNoteMarkdown: string | null = null;
+  private isGeneratingNote: boolean = false;
 
   constructor(leaf: WorkspaceLeaf, plugin: AIPKMCompanionPlugin) {
     super(leaf);
@@ -43,6 +47,21 @@ export class AnalysisView extends ItemView {
   public showResult(result: AnalysisResult): void {
     this.currentResult = result;
     this.currentJob = null;
+    this.permanentNote = null;
+    this.permanentNoteMarkdown = null;
+    this.isGeneratingNote = false;
+    this.render();
+  }
+
+  public showPermanentNote(note: PermanentNoteContent, markdown: string): void {
+    this.permanentNote = note;
+    this.permanentNoteMarkdown = markdown;
+    this.isGeneratingNote = false;
+    this.render();
+  }
+
+  public setGeneratingNote(generating: boolean): void {
+    this.isGeneratingNote = generating;
     this.render();
   }
 
@@ -93,6 +112,10 @@ export class AnalysisView extends ItemView {
     // Content
     if (this.currentJob && this.currentJob.status === 'running') {
       this.renderProgress(container);
+    } else if (this.isGeneratingNote) {
+      this.renderGeneratingNote(container);
+    } else if (this.permanentNote && this.permanentNoteMarkdown) {
+      this.renderPermanentNote(container);
     } else if (this.currentResult) {
       this.renderResult(container);
     } else {
@@ -176,8 +199,116 @@ export class AnalysisView extends ItemView {
       new Notice('Copied to clipboard');
     };
 
-    const saveBtn = actionButtons.createEl('button', { text: 'Save as Note', cls: 'mod-cta' });
+    const saveBtn = actionButtons.createEl('button', { text: 'Save as Note' });
     saveBtn.onclick = () => this.saveAsNote(result);
+
+    const generateBtn = actionButtons.createEl('button', { text: 'Generate Permanent Note', cls: 'mod-cta' });
+    generateBtn.onclick = () => this.plugin.generatePermanentNote(result);
+  }
+
+  private renderGeneratingNote(container: HTMLElement): void {
+    const progressContainer = container.createDiv({ cls: 'progress-container' });
+
+    progressContainer.createEl('h5', { text: 'Generating Permanent Note...' });
+
+    const progressBar = progressContainer.createDiv({ cls: 'progress-bar' });
+    progressBar.createDiv({ cls: 'progress-fill indeterminate' });
+
+    progressContainer.createEl('p', { cls: 'progress-text', text: 'Creating Zettelkasten-style permanent note...' });
+  }
+
+  private renderPermanentNote(container: HTMLElement): void {
+    if (!this.permanentNote || !this.permanentNoteMarkdown) return;
+
+    const note = this.permanentNote;
+    const resultContainer = container.createDiv({ cls: 'result-container' });
+
+    // Title
+    resultContainer.createEl('h5', { text: `📝 ${note.title}` });
+
+    // Key Ideas
+    if (note.keyIdeas.length > 0) {
+      resultContainer.createEl('h6', { text: '핵심 아이디어' });
+      const ideasList = resultContainer.createEl('ul', { cls: 'insights-list' });
+      for (const idea of note.keyIdeas) {
+        ideasList.createEl('li', { text: idea });
+      }
+    }
+
+    // Connected Thoughts Preview
+    if (note.connectedThoughts.relatedConcepts.length > 0) {
+      resultContainer.createEl('h6', { text: '연결된 생각' });
+      const thoughtsContainer = resultContainer.createDiv({ cls: 'topics-container' });
+      for (const concept of note.connectedThoughts.relatedConcepts) {
+        thoughtsContainer.createEl('span', { text: concept, cls: 'topic' });
+      }
+    }
+
+    // Suggested Tags
+    if (note.suggestedTags.length > 0) {
+      resultContainer.createEl('h6', { text: '관련 태그' });
+      const tagsContainer = resultContainer.createDiv({ cls: 'tags-container' });
+      for (const tag of note.suggestedTags) {
+        const tagEl = tagsContainer.createEl('span', { text: `#${tag}`, cls: 'tag' });
+        tagEl.onclick = () => {
+          navigator.clipboard.writeText(`#${tag}`);
+          new Notice('Tag copied to clipboard');
+        };
+      }
+    }
+
+    // Action Buttons
+    const actionButtons = resultContainer.createDiv({ cls: 'action-buttons' });
+
+    const copyBtn = actionButtons.createEl('button', { text: 'Copy Markdown' });
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(this.permanentNoteMarkdown!);
+      new Notice('Permanent note copied to clipboard');
+    };
+
+    const saveBtn = actionButtons.createEl('button', { text: 'Save Permanent Note', cls: 'mod-cta' });
+    saveBtn.onclick = () => this.savePermanentNote();
+
+    const backBtn = actionButtons.createEl('button', { text: 'Back to Analysis' });
+    backBtn.onclick = () => {
+      this.permanentNote = null;
+      this.permanentNoteMarkdown = null;
+      this.render();
+    };
+  }
+
+  private async savePermanentNote(): Promise<void> {
+    if (!this.permanentNote || !this.permanentNoteMarkdown) return;
+
+    const note = this.permanentNote;
+
+    // Create filename with timestamp
+    const sanitizedTitle = note.title
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+    const fileName = `${note.timestamp} ${sanitizedTitle}.md`;
+
+    // Determine output folder
+    const outputFolder = this.plugin.settings.outputFolder?.trim();
+    const filePath = outputFolder ? `${outputFolder}/${fileName}` : fileName;
+
+    try {
+      // Create output folder if it doesn't exist
+      if (outputFolder) {
+        const folderExists = this.app.vault.getAbstractFileByPath(outputFolder);
+        if (!folderExists) {
+          await this.app.vault.createFolder(outputFolder);
+        }
+      }
+
+      const file = await this.app.vault.create(filePath, this.permanentNoteMarkdown);
+      new Notice(`Permanent note created: ${file.path}`);
+      await this.app.workspace.openLinkText(file.path, '');
+    } catch (error) {
+      new Notice(`Error creating note: ${error}`);
+    }
   }
 
   private async saveAsNote(result: AnalysisResult): Promise<void> {

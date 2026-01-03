@@ -3,12 +3,15 @@
  * Centralized model settings, pricing, and token limits
  */
 
-import type { AIProviderType, AIProviderConfig } from '../interfaces/llm-provider';
+import type { AIProviderType, AIProviderConfig, FeatureType } from '../interfaces/llm-provider';
+
+export type ModelTier = 'economy' | 'standard' | 'premium';
 
 export interface ModelConfig {
   id: string;
   displayName: string;
   provider: AIProviderType;
+  tier: ModelTier;
   inputCostPer1M: number;
   outputCostPer1M: number;
   maxInputTokens: number;
@@ -19,14 +22,27 @@ export interface ModelConfig {
 
 export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   // Claude Models
-  'claude-sonnet': {
-    id: 'claude-sonnet-4-20250514',
-    displayName: 'Claude Sonnet 4',
+  'claude-opus-4.5': {
+    id: 'claude-opus-4-5-20251101',
+    displayName: 'Claude Opus 4.5',
     provider: 'claude',
+    tier: 'premium',
+    inputCostPer1M: 15.0,
+    outputCostPer1M: 75.0,
+    maxInputTokens: 200000,
+    maxOutputTokens: 32768,
+    supportsVision: true,
+    supportsStreaming: true,
+  },
+  'claude-sonnet-4.5': {
+    id: 'claude-sonnet-4-5-20250929',
+    displayName: 'Claude Sonnet 4.5',
+    provider: 'claude',
+    tier: 'standard',
     inputCostPer1M: 3.0,
     outputCostPer1M: 15.0,
     maxInputTokens: 200000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     supportsVision: true,
     supportsStreaming: true,
   },
@@ -34,6 +50,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     id: 'claude-3-5-haiku-20241022',
     displayName: 'Claude 3.5 Haiku',
     provider: 'claude',
+    tier: 'economy',
     inputCostPer1M: 0.8,
     outputCostPer1M: 4.0,
     maxInputTokens: 200000,
@@ -43,10 +60,35 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 
   // Gemini Models
-  'gemini-flash': {
+  'gemini-3-pro': {
+    id: 'gemini-3-pro',
+    displayName: 'Gemini 3 Pro',
+    provider: 'gemini',
+    tier: 'premium',
+    inputCostPer1M: 2.5,
+    outputCostPer1M: 10.0,
+    maxInputTokens: 1000000,
+    maxOutputTokens: 65536,
+    supportsVision: true,
+    supportsStreaming: true,
+  },
+  'gemini-3-flash': {
+    id: 'gemini-3-flash',
+    displayName: 'Gemini 3 Flash',
+    provider: 'gemini',
+    tier: 'standard',
+    inputCostPer1M: 0.5,
+    outputCostPer1M: 3.0,
+    maxInputTokens: 1000000,
+    maxOutputTokens: 65536,
+    supportsVision: true,
+    supportsStreaming: true,
+  },
+  'gemini-2-flash': {
     id: 'gemini-2.0-flash',
     displayName: 'Gemini 2.0 Flash',
     provider: 'gemini',
+    tier: 'economy',
     inputCostPer1M: 0.075,
     outputCostPer1M: 0.3,
     maxInputTokens: 1000000,
@@ -54,27 +96,29 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsStreaming: true,
   },
-  'gemini-pro': {
-    id: 'gemini-1.5-pro',
-    displayName: 'Gemini 1.5 Pro',
-    provider: 'gemini',
-    inputCostPer1M: 1.25,
-    outputCostPer1M: 5.0,
-    maxInputTokens: 2000000,
-    maxOutputTokens: 8192,
+
+  // OpenAI Models
+  'gpt-5.2-pro': {
+    id: 'gpt-5.2-pro',
+    displayName: 'GPT-5.2 Pro',
+    provider: 'openai',
+    tier: 'premium',
+    inputCostPer1M: 5.0,
+    outputCostPer1M: 30.0,
+    maxInputTokens: 256000,
+    maxOutputTokens: 32768,
     supportsVision: true,
     supportsStreaming: true,
   },
-
-  // OpenAI Models
-  'gpt-4o': {
-    id: 'gpt-4o',
-    displayName: 'GPT-4o',
+  'gpt-5.2': {
+    id: 'gpt-5.2',
+    displayName: 'GPT-5.2',
     provider: 'openai',
-    inputCostPer1M: 2.5,
-    outputCostPer1M: 10.0,
-    maxInputTokens: 128000,
-    maxOutputTokens: 16384,
+    tier: 'standard',
+    inputCostPer1M: 1.75,
+    outputCostPer1M: 14.0,
+    maxInputTokens: 256000,
+    maxOutputTokens: 32768,
     supportsVision: true,
     supportsStreaming: true,
   },
@@ -82,6 +126,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     id: 'gpt-4o-mini',
     displayName: 'GPT-4o Mini',
     provider: 'openai',
+    tier: 'economy',
     inputCostPer1M: 0.15,
     outputCostPer1M: 0.6,
     maxInputTokens: 128000,
@@ -91,10 +136,23 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 
   // Grok Models
+  'grok-3': {
+    id: 'grok-3',
+    displayName: 'Grok 3',
+    provider: 'grok',
+    tier: 'standard',
+    inputCostPer1M: 3.0,
+    outputCostPer1M: 15.0,
+    maxInputTokens: 131072,
+    maxOutputTokens: 16384,
+    supportsVision: true,
+    supportsStreaming: true,
+  },
   'grok-3-mini': {
     id: 'grok-3-mini',
     displayName: 'Grok 3 Mini',
     provider: 'grok',
+    tier: 'economy',
     inputCostPer1M: 0.3,
     outputCostPer1M: 0.5,
     maxInputTokens: 131072,
@@ -113,7 +171,7 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     name: 'Anthropic Claude',
     displayName: 'Claude',
     endpoint: 'https://api.anthropic.com/v1',
-    defaultModel: 'claude-sonnet-4-20250514',
+    defaultModel: 'claude-sonnet-4-5-20250929',
   },
   gemini: {
     id: 'gemini',
@@ -121,7 +179,7 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta',
     apiKeyPrefix: 'AIza',
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-3-flash',
   },
   openai: {
     id: 'openai',
@@ -129,14 +187,32 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'OpenAI',
     endpoint: 'https://api.openai.com/v1',
     apiKeyPrefix: 'sk-',
-    defaultModel: 'gpt-4o-mini',
+    defaultModel: 'gpt-5.2',
   },
   grok: {
     id: 'grok',
     name: 'xAI Grok',
     displayName: 'Grok',
     endpoint: 'https://api.x.ai/v1',
-    defaultModel: 'grok-3-mini',
+    defaultModel: 'grok-3',
+  },
+};
+
+/**
+ * Default models per feature
+ */
+export const FEATURE_DEFAULT_MODELS: Record<FeatureType, Record<AIProviderType, string>> = {
+  'content-analysis': {
+    claude: 'claude-3-5-haiku-20241022',
+    gemini: 'gemini-2.0-flash',
+    openai: 'gpt-4o-mini',
+    grok: 'grok-3-mini',
+  },
+  'permanent-note': {
+    claude: 'claude-sonnet-4-5-20250929',
+    gemini: 'gemini-3-flash',
+    openai: 'gpt-5.2',
+    grok: 'grok-3',
   },
 };
 
@@ -178,4 +254,21 @@ export function estimateTokens(text: string): number {
   const koreanChars = (text.match(/[\uAC00-\uD7AF]/g) || []).length;
   const otherChars = text.length - koreanChars;
   return Math.ceil(koreanChars / 2 + otherChars / 4);
+}
+
+/**
+ * Get default model for a specific feature and provider
+ */
+export function getDefaultModelForFeature(
+  feature: FeatureType,
+  provider: AIProviderType
+): string {
+  return FEATURE_DEFAULT_MODELS[feature][provider];
+}
+
+/**
+ * Get models by tier
+ */
+export function getModelsByTier(tier: ModelTier): ModelConfig[] {
+  return Object.values(MODEL_CONFIGS).filter((m: ModelConfig) => m.tier === tier);
 }

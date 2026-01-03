@@ -59,12 +59,23 @@ export interface ILLMProvider {
 }
 
 /**
+ * Feature-specific model settings
+ */
+export type FeatureType = 'content-analysis' | 'permanent-note';
+
+export interface FeatureModelSettings {
+  provider: AIProviderType;
+  model: string;
+}
+
+/**
  * AI Service Settings Interface
  */
 export interface AISettings {
   provider: AIProviderType;
   apiKeys: Partial<Record<AIProviderType, string>>;
   models: Record<AIProviderType, string>;
+  featureModels: Partial<Record<FeatureType, FeatureModelSettings>>;
   defaultLanguage: string;
   budgetLimit?: number;
 }

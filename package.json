@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ai-pkm-companion",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "AI-powered PKM companion for Obsidian - content analysis, summarization, and insights extraction",
   "main": "dist/main.js",
   "scripts": {

@@ -10,6 +10,7 @@ import type {
   AIRequestOptions,
   AIProviderResponse,
   AISettings,
+  FeatureType,
 } from '../../domain/interfaces/llm-provider';
 import { BudgetExceededError } from '../../domain/errors/ai-errors';
 import { calculateCost, getModelConfigById } from '../../domain/constants/model-configs';
@@ -136,6 +137,81 @@ export class AIService {
       inputTokens,
       outputTokens
     );
+  }
+
+  /**
+   * Get feature-specific provider and model
+   */
+  getFeatureConfig(feature: FeatureType): { provider: AIProviderType; model: string } {
+    const featureSettings = this.settings.featureModels?.[feature];
+    if (featureSettings) {
+      return {
+        provider: featureSettings.provider,
+        model: featureSettings.model,
+      };
+    }
+    // Fallback to default provider/model
+    return {
+      provider: this.settings.provider,
+      model: this.settings.models[this.settings.provider],
+    };
+  }
+
+  /**
+   * Generate text for a specific feature using its configured model
+   */
+  async generateForFeature(
+    feature: FeatureType,
+    messages: AIMessage[],
+    options?: AIRequestOptions,
+    currentSpend?: number
+  ): Promise<AIProviderResponse> {
+    const { provider: providerType, model } = this.getFeatureConfig(feature);
+    const provider = this.providers.get(providerType);
+    const apiKey = this.settings.apiKeys[providerType];
+
+    if (!provider) {
+      return { success: false, content: '', error: `Provider ${providerType} not available` };
+    }
+    if (!apiKey) {
+      return { success: false, content: '', error: `No API key configured for ${providerType}` };
+    }
+
+    // Check budget before making request
+    if (this.settings.budgetLimit && currentSpend !== undefined) {
+      if (currentSpend >= this.settings.budgetLimit) {
+        throw new BudgetExceededError(
+          'Budget limit exceeded',
+          currentSpend,
+          this.settings.budgetLimit
+        );
+      }
+    }
+
+    const mergedOptions: AIRequestOptions = {
+      model,
+      ...options,
+    };
+
+    return provider.generateText(messages, apiKey, mergedOptions);
+  }
+
+  /**
+   * Simple generation helper for a specific feature
+   */
+  async simpleGenerateForFeature(
+    feature: FeatureType,
+    userPrompt: string,
+    systemPrompt?: string,
+    options?: AIRequestOptions,
+    currentSpend?: number
+  ): Promise<AIProviderResponse> {
+    const messages: AIMessage[] = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: userPrompt });
+    return this.generateForFeature(feature, messages, options, currentSpend);
   }
 
   /**

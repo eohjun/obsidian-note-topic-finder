@@ -16,7 +16,9 @@ import {
   resetEventEmitter,
   JobQueue,
   AnalyzeContentUseCase,
+  GeneratePermanentNoteUseCase,
 } from './core/application';
+import type { AnalysisResult } from './core/domain/entities/analysis-result';
 import { createLLMProvider, createAllProviders } from './core/adapters';
 import { SettingsTab, AnalyzeModal, AnalysisView, ANALYSIS_VIEW_TYPE } from './views';
 import type { AnalyzeModalResult } from './views';
@@ -31,10 +33,20 @@ const DEFAULT_SETTINGS: PluginSettings = {
     provider: 'openai',
     apiKeys: {},
     models: {
-      claude: 'claude-sonnet-4-20250514',
-      gemini: 'gemini-2.0-flash',
-      openai: 'gpt-4o-mini',
-      grok: 'grok-3-mini',
+      claude: 'claude-sonnet-4-5-20250929',
+      gemini: 'gemini-3-flash',
+      openai: 'gpt-5.2',
+      grok: 'grok-3',
+    },
+    featureModels: {
+      'content-analysis': {
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+      },
+      'permanent-note': {
+        provider: 'openai',
+        model: 'gpt-5.2',
+      },
     },
     defaultLanguage: 'auto',
     budgetLimit: undefined,
@@ -126,6 +138,22 @@ export default class AIPKMCompanionPlugin extends Plugin {
       id: 'open-analysis-view',
       name: 'Open analysis view',
       callback: () => this.activateView(),
+    });
+
+    // Generate permanent note from last analysis
+    this.addCommand({
+      id: 'generate-permanent-note',
+      name: 'Generate permanent note from analysis',
+      callback: () => {
+        if (this.analysisView) {
+          const currentResult = (this.analysisView as AnalysisView & { currentResult: AnalysisResult | null }).currentResult;
+          if (currentResult) {
+            this.generatePermanentNote(currentResult);
+          } else {
+            new Notice('No analysis result available. Run analysis first.');
+          }
+        }
+      },
     });
   }
 
@@ -270,6 +298,42 @@ export default class AIPKMCompanionPlugin extends Plugin {
     const apiKey = this.settings.ai.apiKeys[provider];
     if (!apiKey) return false;
     return llmProvider.testApiKey(apiKey);
+  }
+
+  public async generatePermanentNote(analysisResult: AnalysisResult): Promise<void> {
+    // Show generating state
+    if (this.analysisView) {
+      this.analysisView.setGeneratingNote(true);
+    }
+
+    // Allow DOM to render before starting generation
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    try {
+      const useCase = new GeneratePermanentNoteUseCase(this.aiService, this.costTracker);
+      const response = await useCase.execute({
+        analysisResult,
+        language: this.settings.ai.defaultLanguage,
+      });
+
+      if (response.success && response.note && response.markdown) {
+        if (this.analysisView) {
+          this.analysisView.showPermanentNote(response.note, response.markdown);
+        }
+        new Notice('Permanent note generated');
+      } else {
+        if (this.analysisView) {
+          this.analysisView.showError(response.error || 'Failed to generate permanent note');
+        }
+        new Notice(`Generation failed: ${response.error}`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      if (this.analysisView) {
+        this.analysisView.showError(errorMsg);
+      }
+      new Notice(`Generation error: ${errorMsg}`);
+    }
   }
 
   public getCurrentSpend(): number {

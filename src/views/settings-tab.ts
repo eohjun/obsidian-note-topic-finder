@@ -4,9 +4,20 @@
  */
 
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
-import type { AIProviderType, AISettings } from '../core/domain/interfaces/llm-provider';
-import { AI_PROVIDERS, getModelsByProvider } from '../core/domain/constants/model-configs';
+import type { AIProviderType, AISettings, FeatureType } from '../core/domain/interfaces/llm-provider';
+import { AI_PROVIDERS, getModelsByProvider, FEATURE_DEFAULT_MODELS } from '../core/domain/constants/model-configs';
 import type AIPKMCompanionPlugin from '../main';
+
+const FEATURE_LABELS: Record<FeatureType, { name: string; desc: string }> = {
+  'content-analysis': {
+    name: 'Content Analysis',
+    desc: 'URL/텍스트 분석 및 요약 (economy 모델 권장)',
+  },
+  'permanent-note': {
+    name: 'Permanent Note Generation',
+    desc: '영구 노트 생성 (standard/premium 모델 권장)',
+  },
+};
 
 export class SettingsTab extends PluginSettingTab {
   plugin: AIPKMCompanionPlugin;
@@ -22,41 +33,17 @@ export class SettingsTab extends PluginSettingTab {
 
     containerEl.createEl('h2', { text: 'AI-PKM Companion Settings' });
 
-    // Provider Selection
-    this.renderProviderSection(containerEl);
-
     // API Keys
     this.renderApiKeySection(containerEl);
 
-    // Model Selection
-    this.renderModelSection(containerEl);
+    // Feature-Specific Model Selection
+    this.renderFeatureModelSection(containerEl);
 
     // Budget Settings
     this.renderBudgetSection(containerEl);
 
     // Language Settings
     this.renderLanguageSection(containerEl);
-  }
-
-  private renderProviderSection(containerEl: HTMLElement): void {
-    containerEl.createEl('h3', { text: 'LLM Provider' });
-
-    new Setting(containerEl)
-      .setName('Active Provider')
-      .setDesc('Select the LLM provider to use for content analysis')
-      .addDropdown((dropdown) => {
-        const providers = Object.entries(AI_PROVIDERS);
-        for (const [key, config] of providers) {
-          dropdown.addOption(key, config.displayName);
-        }
-        dropdown
-          .setValue(this.plugin.settings.ai.provider)
-          .onChange(async (value: string) => {
-            this.plugin.settings.ai.provider = value as AIProviderType;
-            await this.plugin.saveSettings();
-            this.display(); // Refresh to update model options
-          });
-      });
   }
 
   private renderApiKeySection(containerEl: HTMLElement): void {
@@ -117,27 +104,74 @@ export class SettingsTab extends PluginSettingTab {
     }
   }
 
-  private renderModelSection(containerEl: HTMLElement): void {
-    containerEl.createEl('h3', { text: 'Model Selection' });
+  private renderFeatureModelSection(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: 'Feature-Specific Model Selection' });
+    containerEl.createEl('p', {
+      text: '각 기능별로 사용할 Provider와 Model을 선택하세요.',
+      cls: 'setting-item-description',
+    });
 
-    const currentProvider = this.plugin.settings.ai.provider;
-    const models = getModelsByProvider(currentProvider);
+    const features: FeatureType[] = ['content-analysis', 'permanent-note'];
 
-    new Setting(containerEl)
-      .setName('Model')
-      .setDesc(`Select the model for ${AI_PROVIDERS[currentProvider].displayName}`)
-      .addDropdown((dropdown) => {
-        for (const model of models) {
-          const costInfo = `$${model.inputCostPer1M}/$${model.outputCostPer1M} per 1M`;
-          dropdown.addOption(model.id, `${model.displayName} (${costInfo})`);
-        }
-        dropdown
-          .setValue(this.plugin.settings.ai.models[currentProvider] || AI_PROVIDERS[currentProvider].defaultModel)
-          .onChange(async (value) => {
-            this.plugin.settings.ai.models[currentProvider] = value;
-            await this.plugin.saveSettings();
-          });
-      });
+    for (const feature of features) {
+      const label = FEATURE_LABELS[feature];
+      const currentSettings = this.plugin.settings.ai.featureModels?.[feature];
+      const currentProvider = currentSettings?.provider || this.plugin.settings.ai.provider;
+      const currentModel = currentSettings?.model || FEATURE_DEFAULT_MODELS[feature][currentProvider];
+
+      // Feature heading
+      const featureDiv = containerEl.createDiv({ cls: 'feature-model-setting' });
+      featureDiv.createEl('h4', { text: label.name });
+      featureDiv.createEl('p', { text: label.desc, cls: 'setting-item-description' });
+
+      // Provider selection
+      new Setting(featureDiv)
+        .setName('Provider')
+        .addDropdown((dropdown) => {
+          const providers = Object.entries(AI_PROVIDERS);
+          for (const [key, config] of providers) {
+            dropdown.addOption(key, config.displayName);
+          }
+          dropdown
+            .setValue(currentProvider)
+            .onChange(async (value: string) => {
+              const provider = value as AIProviderType;
+              if (!this.plugin.settings.ai.featureModels) {
+                this.plugin.settings.ai.featureModels = {};
+              }
+              this.plugin.settings.ai.featureModels[feature] = {
+                provider,
+                model: FEATURE_DEFAULT_MODELS[feature][provider],
+              };
+              await this.plugin.saveSettings();
+              this.display();
+            });
+        });
+
+      // Model selection
+      const models = getModelsByProvider(currentProvider);
+      new Setting(featureDiv)
+        .setName('Model')
+        .addDropdown((dropdown) => {
+          for (const model of models) {
+            const tierBadge = model.tier === 'premium' ? '⭐' : model.tier === 'standard' ? '●' : '○';
+            const costInfo = `$${model.inputCostPer1M}/$${model.outputCostPer1M}`;
+            dropdown.addOption(model.id, `${tierBadge} ${model.displayName} (${costInfo})`);
+          }
+          dropdown
+            .setValue(currentModel)
+            .onChange(async (value) => {
+              if (!this.plugin.settings.ai.featureModels) {
+                this.plugin.settings.ai.featureModels = {};
+              }
+              this.plugin.settings.ai.featureModels[feature] = {
+                provider: currentProvider,
+                model: value,
+              };
+              await this.plugin.saveSettings();
+            });
+        });
+    }
   }
 
   private renderBudgetSection(containerEl: HTMLElement): void {
