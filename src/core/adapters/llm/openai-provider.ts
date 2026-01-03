@@ -20,6 +20,7 @@ interface OpenAIRequest {
   model: string;
   messages: OpenAIMessage[];
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
 }
 
@@ -49,6 +50,21 @@ export class OpenAIProvider extends BaseProvider {
 
   async testApiKey(apiKey: string): Promise<boolean> {
     try {
+      const model = this.config.defaultModel;
+      const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('o1') || model.startsWith('o3');
+
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      // GPT-5.x and o-series models use max_completion_tokens instead of max_tokens
+      if (isReasoningModel) {
+        requestBody.max_completion_tokens = 10;
+      } else {
+        requestBody.max_tokens = 10;
+      }
+
       const response = await this.makeRequest<OpenAIResponse>({
         url: `${this.config.endpoint}/chat/completions`,
         method: 'POST',
@@ -56,11 +72,7 @@ export class OpenAIProvider extends BaseProvider {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: this.config.defaultModel,
-          messages: [{ role: 'user', content: 'Hello' }],
-          max_tokens: 10,
-        }),
+        body: JSON.stringify(requestBody),
       });
       return !response.error && response.choices && response.choices.length > 0;
     } catch {
@@ -74,13 +86,21 @@ export class OpenAIProvider extends BaseProvider {
     options?: AIRequestOptions
   ): Promise<AIProviderResponse> {
     const openaiMessages = this.convertMessages(messages);
+    const model = options?.model || this.config.defaultModel;
+    const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('o1') || model.startsWith('o3');
 
     const requestBody: OpenAIRequest = {
-      model: options?.model || this.config.defaultModel,
+      model,
       messages: openaiMessages,
-      max_tokens: options?.maxTokens ?? 4096,
       temperature: options?.temperature ?? 0.7,
     };
+
+    // GPT-5.x and o-series models use max_completion_tokens instead of max_tokens
+    if (isReasoningModel) {
+      requestBody.max_completion_tokens = options?.maxTokens ?? 4096;
+    } else {
+      requestBody.max_tokens = options?.maxTokens ?? 4096;
+    }
 
     try {
       const response = await this.makeRequest<OpenAIResponse>({
