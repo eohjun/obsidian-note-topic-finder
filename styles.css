@@ -150,7 +150,8 @@
 /* Action Buttons */
 .ai-pkm-analysis-view .action-buttons {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid var(--background-modifier-border);
@@ -158,6 +159,8 @@
 
 .ai-pkm-analysis-view .action-buttons button {
   flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
 }
 
 /* Error Message */
