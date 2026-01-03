@@ -175,7 +175,7 @@ export const AI_PROVIDERS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'OpenAI',
     endpoint: 'https://api.openai.com/v1',
     apiKeyPrefix: 'sk-',
-    defaultModel: 'gpt-5.2',
+    defaultModel: 'gpt-4o-mini',
   },
   grok: {
     id: 'grok',
