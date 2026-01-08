@@ -17,6 +17,7 @@ export class AnalysisView extends ItemView {
   private currentJob: Job | null = null;
   private suggestedTopics: NoteTopic[] | null = null;
   private isSuggestingTopics: boolean = false;
+  private viewingTopics: boolean = false;  // Track which view to show
 
   // Loading overlay elements (direct DOM references)
   private loadingOverlayEl: HTMLElement | null = null;
@@ -53,6 +54,7 @@ export class AnalysisView extends ItemView {
     this.currentJob = null;
     this.suggestedTopics = null;
     this.isSuggestingTopics = false;
+    this.viewingTopics = false;  // Reset to analysis view for new result
     this.render();
   }
 
@@ -60,6 +62,7 @@ export class AnalysisView extends ItemView {
     this.hideLoadingOverlay();
     this.suggestedTopics = topics;
     this.isSuggestingTopics = false;
+    this.viewingTopics = true;  // Show topics view
     this.render();
   }
 
@@ -164,7 +167,7 @@ export class AnalysisView extends ItemView {
     newAnalysisBtn.onclick = () => this.plugin.openAnalyzeModal();
 
     // Content - no longer handle progress here
-    if (this.suggestedTopics && this.suggestedTopics.length > 0) {
+    if (this.viewingTopics && this.suggestedTopics && this.suggestedTopics.length > 0) {
       this.renderTopicSuggestions(container);
     } else if (this.currentResult) {
       this.renderResult(container);
@@ -245,8 +248,17 @@ export class AnalysisView extends ItemView {
     const saveBtn = actionButtons.createEl('button', { text: 'Save as Note' });
     saveBtn.onclick = () => this.saveAsNote(result);
 
-    const suggestBtn = actionButtons.createEl('button', { text: 'Suggest Note Topics', cls: 'mod-cta' });
-    suggestBtn.onclick = () => this.plugin.suggestNoteTopics(result);
+    // Show "View Suggested Topics" button if topics already exist
+    if (this.suggestedTopics && this.suggestedTopics.length > 0) {
+      const viewTopicsBtn = actionButtons.createEl('button', { text: 'View Suggested Topics', cls: 'mod-cta' });
+      viewTopicsBtn.onclick = () => {
+        this.viewingTopics = true;
+        this.render();
+      };
+    } else {
+      const suggestBtn = actionButtons.createEl('button', { text: 'Suggest Note Topics', cls: 'mod-cta' });
+      suggestBtn.onclick = () => this.plugin.suggestNoteTopics(result);
+    }
   }
 
   private renderTopicSuggestions(container: HTMLElement): void {
@@ -312,11 +324,136 @@ export class AnalysisView extends ItemView {
       new Notice('All topics copied to clipboard');
     };
 
+    // Save as Note button - saves analysis + suggested topics together
+    const saveBtn = actionButtons.createEl('button', { text: 'Save as Note', cls: 'mod-cta' });
+    saveBtn.onclick = () => this.saveAsNoteWithTopics();
+
     const backBtn = actionButtons.createEl('button', { text: 'Back to Analysis' });
     backBtn.onclick = () => {
-      this.suggestedTopics = null;
+      // Keep suggestedTopics in memory so user can return
+      this.viewingTopics = false;
       this.render();
     };
+  }
+
+  /**
+   * Generate markdown with both analysis result and suggested topics
+   */
+  private generateFullMarkdown(): string {
+    if (!this.currentResult) return '';
+
+    const result = this.currentResult;
+    const lines: string[] = [];
+
+    // Frontmatter
+    lines.push('---');
+    lines.push(`created: ${result.createdAt.toISOString().split('T')[0]}`);
+    if (result.sourceUrl) {
+      lines.push(`source: "${result.sourceUrl}"`);
+    }
+    if (result.sourcePath) {
+      lines.push(`source_note: "[[${result.sourcePath.replace(/\.md$/, '')}]]"`);
+    }
+    if (result.suggestedTags.length > 0) {
+      lines.push(`tags:`);
+      result.suggestedTags.forEach((tag) => {
+        const formattedTag = tag.replace(/\s+/g, '_');
+        lines.push(`  - ${formattedTag}`);
+      });
+    }
+    if (result.relatedTopics.length > 0) {
+      lines.push(`topics:`);
+      result.relatedTopics.forEach((topic) => {
+        lines.push(`  - "${topic}"`);
+      });
+    }
+    lines.push(`analyzed_at: ${result.createdAt.toISOString()}`);
+    lines.push(`source_type: ${result.sourceType}`);
+    lines.push('---');
+    lines.push('');
+
+    // Analysis Summary
+    lines.push(`## Summary`);
+    lines.push(result.summary);
+    lines.push('');
+
+    // Key Insights
+    if (result.keyInsights.length > 0) {
+      lines.push(`## Key Insights`);
+      result.keyInsights.forEach((insight) => {
+        lines.push(`- ${insight}`);
+      });
+      lines.push('');
+    }
+
+    // Suggested Topics (if available)
+    if (this.suggestedTopics && this.suggestedTopics.length > 0) {
+      lines.push('## Permanent Note Topics');
+      lines.push('');
+      lines.push('> Use /permanent-note-author skill to write these notes with high quality.');
+      lines.push('');
+
+      this.suggestedTopics.forEach((topic, i) => {
+        lines.push(`### ${i + 1}. ${topic.title}`);
+        lines.push('');
+        lines.push(`**Rationale:** ${topic.rationale}`);
+        lines.push('');
+        if (topic.keyPoints.length > 0) {
+          lines.push('**Key Points:**');
+          topic.keyPoints.forEach((point) => {
+            lines.push(`- ${point}`);
+          });
+          lines.push('');
+        }
+        if (topic.suggestedTags.length > 0) {
+          lines.push(`**Tags:** ${topic.suggestedTags.map(t => `#${t}`).join(' ')}`);
+          lines.push('');
+        }
+      });
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Save note with both analysis result and suggested topics
+   */
+  private async saveAsNoteWithTopics(): Promise<void> {
+    if (!this.currentResult) {
+      new Notice('No analysis result to save');
+      return;
+    }
+
+    const markdown = this.generateFullMarkdown();
+    const result = this.currentResult;
+
+    // Sanitize title for file name
+    const sanitizedTitle = result.suggestedTitle
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 100);
+    const fileName = `${sanitizedTitle}.md`;
+
+    // Determine output folder
+    const outputFolder = this.plugin.settings.outputFolder?.trim();
+    const filePath = outputFolder ? `${outputFolder}/${fileName}` : fileName;
+
+    try {
+      // Create output folder if it doesn't exist
+      if (outputFolder) {
+        const folderExists = this.app.vault.getAbstractFileByPath(outputFolder);
+        if (!folderExists) {
+          await this.app.vault.createFolder(outputFolder);
+        }
+      }
+
+      const file = await this.app.vault.create(filePath, markdown);
+      new Notice(`Note created with topics: ${file.path}`);
+      await this.app.workspace.openLinkText(file.path, '');
+    } catch (error) {
+      new Notice(`Error creating note: ${error}`);
+    }
   }
 
   private async saveAsNote(result: AnalysisResult): Promise<void> {
