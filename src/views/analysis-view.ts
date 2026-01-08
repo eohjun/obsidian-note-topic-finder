@@ -3,7 +3,7 @@
  * Sidebar view for displaying analysis results
  */
 
-import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice, normalizePath, TFolder } from 'obsidian';
 import type { AnalysisResult } from '../core/domain/entities/analysis-result';
 import type { Job } from '../core/domain/entities/job';
 import type { NoteTopic } from '../core/application';
@@ -435,22 +435,20 @@ export class AnalysisView extends ItemView {
       .slice(0, 100);
     const fileName = `${sanitizedTitle}.md`;
 
-    // Determine output folder
+    // Determine output folder with path normalization
     const outputFolder = this.plugin.settings.outputFolder?.trim();
-    const filePath = outputFolder ? `${outputFolder}/${fileName}` : fileName;
+    const filePath = normalizePath(outputFolder ? `${outputFolder}/${fileName}` : fileName);
 
     try {
-      // Create output folder if it doesn't exist
+      // Ensure output folder exists (cross-platform safe)
       if (outputFolder) {
-        const folderExists = this.app.vault.getAbstractFileByPath(outputFolder);
-        if (!folderExists) {
-          await this.app.vault.createFolder(outputFolder);
-        }
+        await this.ensureFolder(normalizePath(outputFolder));
       }
 
-      const file = await this.app.vault.create(filePath, markdown);
-      new Notice(`Note created with topics: ${file.path}`);
-      await this.app.workspace.openLinkText(file.path, '');
+      // Create file (with adapter fallback for sync scenarios)
+      await this.createFile(filePath, markdown);
+      new Notice(`Note created with topics: ${filePath}`);
+      await this.app.workspace.openLinkText(filePath, '');
     } catch (error) {
       new Notice(`Error creating note: ${error}`);
     }
@@ -467,24 +465,66 @@ export class AnalysisView extends ItemView {
       .slice(0, 100);
     const fileName = `${sanitizedTitle}.md`;
 
-    // Determine output folder
+    // Determine output folder with path normalization
     const outputFolder = this.plugin.settings.outputFolder?.trim();
-    const filePath = outputFolder ? `${outputFolder}/${fileName}` : fileName;
+    const filePath = normalizePath(outputFolder ? `${outputFolder}/${fileName}` : fileName);
 
     try {
-      // Create output folder if it doesn't exist
+      // Ensure output folder exists (cross-platform safe)
       if (outputFolder) {
-        const folderExists = this.app.vault.getAbstractFileByPath(outputFolder);
-        if (!folderExists) {
-          await this.app.vault.createFolder(outputFolder);
-        }
+        await this.ensureFolder(normalizePath(outputFolder));
       }
 
-      const file = await this.app.vault.create(filePath, markdown);
-      new Notice(`Note created: ${file.path}`);
-      await this.app.workspace.openLinkText(file.path, '');
+      // Create file (with adapter fallback for sync scenarios)
+      await this.createFile(filePath, markdown);
+      new Notice(`Note created: ${filePath}`);
+      await this.app.workspace.openLinkText(filePath, '');
     } catch (error) {
       new Notice(`Error creating note: ${error}`);
+    }
+  }
+
+  /**
+   * Ensure folder exists with cross-platform compatibility
+   * Handles "already exists" errors from Git sync scenarios
+   */
+  private async ensureFolder(path: string): Promise<void> {
+    const normalizedPath = normalizePath(path);
+    const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+    if (existing instanceof TFolder) {
+      return; // Already exists as folder
+    }
+
+    try {
+      await this.app.vault.createFolder(normalizedPath);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      // "Folder already exists" from sync - treat as success
+      if (msg.toLowerCase().includes('already exists')) {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create file with cross-platform compatibility
+   * Uses adapter fallback when Obsidian index isn't synced
+   */
+  private async createFile(path: string, content: string): Promise<void> {
+    const normalizedPath = normalizePath(path);
+
+    try {
+      await this.app.vault.create(normalizedPath, content);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      // File exists from sync - use adapter.write
+      if (msg.toLowerCase().includes('already exists')) {
+        await this.app.vault.adapter.write(normalizedPath, content);
+        return;
+      }
+      throw error;
     }
   }
 }
