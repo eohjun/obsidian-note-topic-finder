@@ -1,97 +1,107 @@
-# AI-PKM Companion
+# Note Topic Finder
 
-An Obsidian plugin for AI-powered Personal Knowledge Management. Analyze content from URLs or text, extract key insights, and manage your knowledge with LLM assistance.
+An Obsidian plugin that analyzes content and discovers permanent note topics from URLs, text, and vault notes.
 
 ## Features
 
-### MVP (v0.1.0)
-- **Multi-Provider LLM Support**: Claude (Anthropic), GPT-4 (OpenAI), Gemini (Google)
-- **Content Analysis**: Analyze URLs or pasted text content
-- **Insight Extraction**: Get summaries, key insights, suggested tags, and related topics
-- **Cost Tracking**: Monitor API usage and set budget limits
-- **Sidebar View**: View analysis results in a dedicated sidebar
+- **Content Analysis**: Analyze URLs, pasted text, or existing vault notes
+- **Permanent Note Topics**: AI-powered suggestions for Zettelkasten-style permanent notes
+- **Connection Discovery**: Find connections to existing notes in your vault
+- **Multi-Provider Support**: OpenAI, Anthropic Claude, Google Gemini, xAI Grok
+- **Clipboard Analysis**: Quick analyze from clipboard content
+- **Cost Tracking**: Monitor API usage with optional budget limits
+
+## PKM Workflow
+
+```
+Content Sources → Note Topic Finder → Permanent Note Topics
+      ↓                   ↓                    ↓
+   URL/Text          AI Analysis         Topic Suggestions
+   Vault Notes       Extraction          Connection Points
+   Clipboard         Insights            Tag Recommendations
+```
+
+## Supported AI Providers
+
+| Provider | Model | Notes |
+|----------|-------|-------|
+| **OpenAI** | GPT-4o, GPT-4o-mini, GPT-5.2 | Default provider |
+| **Anthropic** | Claude Sonnet 4 | Deep analysis |
+| **Google Gemini** | Gemini 3 Flash | Fast and affordable |
+| **xAI** | Grok 3 | Alternative provider |
 
 ## Installation
 
-### Via BRAT (Recommended for Beta)
+### BRAT (Recommended)
+
 1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin
 2. Open BRAT settings
-3. Add beta plugin: `eohjun/obsidian-ai-pkm-companion`
-4. Enable the plugin
+3. Click "Add Beta plugin"
+4. Enter: `eohjun/obsidian-note-topic-finder`
+5. Enable the plugin
 
-### Manual Installation
-1. Download the latest release from GitHub
-2. Extract to `.obsidian/plugins/ai-pkm-companion/`
-3. Enable the plugin in Obsidian settings
+### Manual
 
-## Configuration
+1. Download `main.js`, `manifest.json`, `styles.css` from the latest release
+2. Create folder: `<vault>/.obsidian/plugins/note-topic-finder/`
+3. Copy downloaded files to the folder
+4. Enable the plugin in Obsidian settings
 
-### API Keys
-1. Go to Settings → AI-PKM Companion
-2. Enter your API key for your preferred provider:
-   - **Claude**: Get from [Anthropic Console](https://console.anthropic.com/)
-   - **OpenAI**: Get from [OpenAI Platform](https://platform.openai.com/)
-   - **Gemini**: Get from [Google AI Studio](https://aistudio.google.com/)
-3. Click "Test" to verify your API key
+## Setup
 
-### Model Selection
-Choose the model based on your needs:
-- **Claude Sonnet 4**: Best quality, higher cost ($3/$15 per 1M tokens)
-- **Claude Haiku**: Fast and affordable ($0.8/$4 per 1M tokens)
-- **GPT-4o**: High quality with vision ($2.5/$10 per 1M tokens)
-- **GPT-4o Mini**: Most affordable OpenAI option ($0.15/$0.6 per 1M tokens)
-- **Gemini Flash**: Fast and very affordable ($0.075/$0.3 per 1M tokens)
+### API Key Configuration
 
-### Budget Management
-Set a monthly budget limit to control costs. You'll receive warnings when approaching the limit.
+1. Open Settings → Note Topic Finder
+2. Select your preferred AI provider
+3. Enter the API key for the selected provider
+4. Optionally set a budget limit for cost tracking
 
-## Usage
+## Commands
 
-### Analyze Content
-1. Click the sparkles icon in the ribbon, or
-2. Use command palette: "AI-PKM Companion: Analyze content"
-3. Choose source type (URL or Text)
-4. Enter content and select options
-5. Click "Analyze"
+| Command | Description |
+|---------|-------------|
+| **Analyze content** | Open modal to analyze URL or text |
+| **Analyze clipboard content** | Analyze content from clipboard |
+| **Open analysis view** | Open the analysis sidebar |
+| **Suggest permanent note topics from analysis** | Generate topic suggestions from current analysis |
 
-### Analyze Clipboard
-1. Copy text or URL to clipboard
-2. Use command palette: "AI-PKM Companion: Analyze clipboard content"
-
-### View Results
-Results appear in the sidebar with:
-- Summary
-- Key Insights (bullet points)
-- Suggested Tags (click to copy)
-- Related Topics
-
-### Save as Note
-Click "Save as Note" to create a new markdown file with the analysis.
-
-## Roadmap
-
-### v0.2.0 (Post-MVP)
-- [ ] Semantic connection suggestions (OpenAI embeddings)
-- [ ] Permanent note generation (Zettelkasten templates)
-- [ ] Knowledge gap detection
-
-### v0.3.0
-- [ ] Reading queue management
-- [ ] Note maturity tracking
-- [ ] Spaced repetition integration
-
-## Architecture
-
-This plugin follows Clean Architecture principles:
+## Usage Workflow
 
 ```
-src/
-├── core/
-│   ├── domain/       # Entities, interfaces, constants
-│   ├── application/  # Use cases, services
-│   └── adapters/     # LLM provider implementations
-└── views/            # UI components
+1. Input content:
+   - Paste a URL to analyze web content
+   - Paste text directly for analysis
+   - Select existing note from vault
+2. AI analyzes the content
+3. Review results:
+   - Summary
+   - Key insights
+   - Suggested tags
+   - Related topics
+4. Generate permanent note topic suggestions
+5. Create new notes from suggestions
 ```
+
+## Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **AI Provider** | Provider for analysis | OpenAI |
+| **API Key** | API key for selected provider | - |
+| **Content Analysis Model** | Model for content analysis | gpt-4o-mini |
+| **Permanent Note Model** | Model for topic suggestions | gpt-5.2 |
+| **Output Folder** | Folder for generated notes | - |
+| **Budget Limit** | Optional monthly budget limit | - |
+| **Default Language** | Output language | auto |
+
+## Related Plugins
+
+This plugin works well with:
+
+- **[Reading Queue Manager](https://github.com/eohjun/obsidian-reading-queue-manager)**: Manage content for analysis
+- **[Evergreen Note Cultivator](https://github.com/eohjun/obsidian-evergreen-note-cultivator)**: Evaluate quality of created notes
+- **[PKM Note Recommender](https://github.com/eohjun/obsidian-pkm-note-recommender)**: Find connections for new notes
+- **[Socratic Challenger](https://github.com/eohjun/obsidian-socratic-challenger)**: Deepen understanding of topics
 
 ## Development
 
@@ -99,7 +109,7 @@ src/
 # Install dependencies
 npm install
 
-# Development mode (watch)
+# Development with watch mode
 npm run dev
 
 # Type check
@@ -111,12 +121,4 @@ npm run build
 
 ## License
 
-MIT License
-
-## Credits
-
-Built with:
-- [Obsidian](https://obsidian.md/) - The knowledge base that works on top of local Markdown files
-- [Anthropic Claude](https://www.anthropic.com/) - AI assistant
-- [OpenAI](https://openai.com/) - GPT models
-- [Google Gemini](https://deepmind.google/technologies/gemini/) - Multimodal AI
+MIT
